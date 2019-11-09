@@ -8,7 +8,7 @@ import persistence.JobRepository
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class JobService @Inject()(jobRepo: JobRepository)(implicit system: ActorSystem) {
-  private implicit val ec: ExecutionContextExecutor = system.dispatcher
+  private implicit val ec: ExecutionContextExecutor = system.dispatchers.lookup("service-context")
 
   def create(job: Job): Future[Job] = jobRepo.create(job)
   def findById(jobId: Int): Future[Option[Job]] = jobRepo.findById(jobId)

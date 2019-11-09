@@ -12,9 +12,10 @@
 | 8 | Deployment | Dockerize, create Heroku project, provision with database and logging, metrics | 1 |
 | 9 | CI/CD pipeline | Create build, coverage and code quality pipeline, add deployment | 2 |
 
-# Defintion of done
+# Definition of done
 *  Service automatically building
 *  100% test coverage
 *  No major code quality issues reported
 *  Design documented
 *  API documented
+*  Stateless service: can be horizontally-scaled

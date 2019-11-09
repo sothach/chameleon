@@ -20,7 +20,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 class JobRepository @Inject()(implicit system: ActorSystem,
                               protected val dbConfigProvider: DatabaseConfigProvider)
                                                   extends HasDatabaseConfigProvider[JdbcProfile] {
-  private implicit val ec: ExecutionContextExecutor = system.dispatcher
+  private implicit val ec: ExecutionContextExecutor = system.dispatchers.lookup("persistence-context")
   private val logger = Logger(this.getClass)
   implicit val statusMapper: JdbcType[JobStatus] with BaseTypedType[JobStatus] =
     MappedColumnType.base[JobStatus, String](e => e.toString, s => JobStatus.withName(s))
