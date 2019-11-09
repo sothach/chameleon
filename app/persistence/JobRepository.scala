@@ -6,13 +6,13 @@ import java.time.{LocalDateTime, ZoneOffset}
 import akka.actor.ActorSystem
 import com.google.inject.Singleton
 import javax.inject.Inject
-import model.{Job, JobStatus}
 import model.JobStatus.JobStatus
+import model.{Job, JobStatus}
 import play.api.Logger
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.ast.BaseTypedType
-import slick.jdbc.{JdbcProfile, JdbcType}
 import slick.jdbc.PostgresProfile.api._
+import slick.jdbc.{JdbcProfile, JdbcType}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -20,7 +20,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 class JobRepository @Inject()(implicit system: ActorSystem,
                               protected val dbConfigProvider: DatabaseConfigProvider)
                                                   extends HasDatabaseConfigProvider[JdbcProfile] {
-  private implicit val ec: ExecutionContextExecutor = system.dispatchers.lookup("db-context")
+  private implicit val ec: ExecutionContextExecutor = system.dispatcher
   private val logger = Logger(this.getClass)
   implicit val statusMapper: JdbcType[JobStatus] with BaseTypedType[JobStatus] =
     MappedColumnType.base[JobStatus, String](e => e.toString, s => JobStatus.withName(s))
@@ -47,10 +47,9 @@ class JobRepository @Inject()(implicit system: ActorSystem,
   def findById(id: Long): Future[Option[Job]] =
     db.run(findByIdQuery(id))
 
-  def create(newJob: Job): Future[Job] =
-    db.run(
-      jobs returning jobs.map(_.jobId) into ((job, id) =>
-        job.copy(jobId = id)) += newJob)
+  def create(newJob: Job): Future[Job] = db.run(
+    jobs returning jobs.map(_.jobId) into ((job, id) =>
+      job.copy(jobId = id)) += newJob)
 
   def update(job: Job): Future[Int] = {
     val action = for {

@@ -4,14 +4,15 @@ import java.time.LocalDateTime
 
 import akka.actor.ActorSystem
 import model.{Job, JobStatus}
+import org.mockito.Matchers._
+import org.mockito.Mockito.when
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
 import org.scalatestplus.mockito.MockitoSugar
-import org.mockito.Mockito.when
-import org.mockito.Matchers._
-import scala.concurrent.duration._
 import persistence.JobRepository
 
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
 class JobServiceSpec extends AsyncFlatSpec with MockitoSugar with MustMatchers {
   private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
