@@ -1,12 +1,11 @@
 package services
 
-import model.Finish.{Glossy, Matte}
-import model.{JobSpecification, MixSolution}
-import org.scalatest.{FlatSpec, MustMatchers}
+import model.{Batch, Color, JobSpecification, MixSolution}
+import org.scalatest.{FlatSpec, MustMatchers, OptionValues}
 
 import scala.language.postfixOps
 
-class PlannerSpec extends FlatSpec with MustMatchers {
+class PlannerSpec extends FlatSpec with MustMatchers with OptionValues {
 
   /*
   Integer N, the number of paint colors,
@@ -34,14 +33,20 @@ class PlannerSpec extends FlatSpec with MustMatchers {
     http://0.0.0.0:8080/v1/?input={"colors":1,"customers":2,"demands":[[1,1,1],[1,1,0]]}
    */
 
-  "When an existing job is queried, it" should "be returned" in {
+  "When job specification is processed, it" should "return the expected solution" in {
     val subject = new PaintShopPlanner()
-    val request = JobSpecification(5, 3, Array(Array(1,1,1),Array(2,1,0,2,0),Array(1,5,0)))
-    val solution = Some(MixSolution(Array(Matte,Glossy,Glossy,Glossy,Glossy)))
+    val color1 = Color(1)
+    val color2 = Color(2)
+    val color5 = Color(5)
+    val request = JobSpecification(Array(
+        Batch(Array(color1.matte)),
+        Batch(Array(color1.gloss,color2.gloss)),
+        Batch(Array(color5.gloss))
+      ))
     val result = subject.solve(request)
     result match {
       case Some(MixSolution(batch)) =>
-        batch must be(Array(Matte,Glossy,Glossy,Glossy,Glossy))
+        batch.colors must be(Array(color1.matte,color1.gloss,color1.gloss,color1.gloss,color1.gloss))
       case None =>
         fail("solution not found")
     }

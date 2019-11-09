@@ -3,7 +3,7 @@ package services
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import model.Finish.{Glossy, Matte}
-import model.{JobSpecification, MixSolution}
+import model.{Batch, Color, JobSpecification, MixSolution}
 import org.mockito.Matchers._
 import org.mockito.Mockito.when
 import org.scalatest.{FlatSpec, MustMatchers}
@@ -18,14 +18,19 @@ import scala.language.postfixOps
 class MixServiceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
 
-  "When an existing job is queried, it" should "be returned" in {
+  "When a mix batch is requested, it" should "be calculated by the service" in {
     val planner = mock[PaintShopPlanner]
     val configuration = mock[Configuration]
     val environment = mock[Environment]
-    val solution = Some(MixSolution(Array(Glossy,Glossy,Matte,Glossy)))
+    val solution = Some(MixSolution.withColors(Seq(Color(1,Glossy),Color(1,Glossy),Color(1,Matte),Color(1,Glossy))))
     when(planner.solve(any[JobSpecification])).thenReturn(solution)
 
-    val request = JobSpecification(1, 2, Array(Array(1,1,1),Array(1,1,0)))
+    val color1 = Color(1)
+    val request = JobSpecification(
+      Array(
+        Batch(Array(color1.gloss)),
+        Batch(Array(color1.matte))
+      ))
     val subject = new MixService(planner, configuration, environment)
 
     val result = Await.result(subject.seekSolution(Source(immutable.Seq(request))), 2 seconds)
