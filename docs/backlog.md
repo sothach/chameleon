@@ -9,7 +9,7 @@
 | 5 | API (evolution) | Create target API, add job retrieval, 301 re-direct for legacy API | 2 |  
 | 6 | Authentication | Require valid JWT with user email and role, base API access on this | 1 | 
 | 7 | Metrics | Add metrics endpoint for monitoring purposes | 1 |
-| 8 | Deployment | Create Heroku project, provision with database and logging, metrics | 1 |
+| 8 | Deployment | Dockerize, create Heroku project, provision with database and logging, metrics | 1 |
 | 9 | CI/CD pipeline | Create build, coverage and code quality pipeline, add deployment | 2 |
 
 # Defintion of done

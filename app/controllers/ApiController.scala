@@ -1,13 +1,12 @@
 package controllers
 
 import javax.inject._
-import play.api._
 import play.api.mvc._
 
 @Singleton
 class ApiController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  def index() = Action { implicit request: Request[AnyContent] =>
+  def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok("Computer")
   }
 }
