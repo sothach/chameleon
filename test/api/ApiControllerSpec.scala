@@ -9,10 +9,11 @@ import play.api.test.Helpers._
 class ApiControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting {
 
   "ApiController GET" should {
+    val url = "/api/v2/jobs/request"
 
     "answer with the expected value from a new instance of controller" in {
       val controller = new ApiController(stubControllerComponents())
-      val index = controller.index().apply(FakeRequest(GET, "/"))
+      val index = controller.index().apply(FakeRequest(GET, url))
 
       status(index) mustBe OK
       contentType(index) mustBe Some("text/plain")
@@ -21,7 +22,7 @@ class ApiControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting 
 
     "answer with the expected value from the application" in {
       val controller = inject[ApiController]
-      val index = controller.index().apply(FakeRequest(GET, "/"))
+      val index = controller.index().apply(FakeRequest(GET, url))
 
       status(index) mustBe OK
       contentType(index) mustBe Some("text/plain")
@@ -29,7 +30,7 @@ class ApiControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting 
     }
 
     "answer with the expected value from the router" in {
-      val request = FakeRequest(GET, "/")
+      val request = FakeRequest(GET, url)
       val index = route(app, request).get
 
       status(index) mustBe OK

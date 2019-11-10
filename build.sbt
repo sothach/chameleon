@@ -20,3 +20,6 @@ libraryDependencies ++= Seq(
   "org.testcontainers" % "postgresql" % "1.12.3" % Test
 )
 
+import play.sbt.routes.RoutesKeys.routesImport
+routesImport += "model.JobSpecification"
+routesImport += "conversions.Binders._"

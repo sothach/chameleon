@@ -3,7 +3,7 @@ package services
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import model.Finish.{Glossy, Matte}
-import model.{Batch, Color, JobSpecification, MixSolution}
+import model.{Batch, Paint, JobSpecification, MixSolution}
 import org.mockito.Matchers._
 import org.mockito.Mockito.when
 import org.scalatest.{FlatSpec, MustMatchers}
@@ -22,11 +22,11 @@ class MixServiceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val planner = mock[PaintShopPlanner]
     val configuration = mock[Configuration]
     val environment = mock[Environment]
-    val solution = Some(MixSolution.withColors(Seq(Color(1,Glossy),Color(1,Glossy),Color(1,Matte),Color(1,Glossy))))
+    val solution = Some(MixSolution.withPaints(Seq(Paint(1,Glossy),Paint(1,Glossy),Paint(1,Matte),Paint(1,Glossy))))
     when(planner.solve(any[JobSpecification])).thenReturn(solution)
 
-    val color1 = Color(1)
-    val request = JobSpecification(
+    val color1 = Paint(1)
+    val request = JobSpecification(1,
       Array(
         Batch(Array(color1.gloss)),
         Batch(Array(color1.matte))

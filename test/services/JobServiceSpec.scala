@@ -3,7 +3,7 @@ package services
 import java.time.LocalDateTime
 
 import akka.actor.ActorSystem
-import model.Job
+import model.{Batch, Finish, Job, JobSpecification, Paint}
 import org.mockito.Matchers._
 import org.mockito.Mockito.when
 import org.scalatest.{AsyncFlatSpec, MustMatchers}
@@ -19,8 +19,11 @@ class JobServiceSpec extends AsyncFlatSpec with MockitoSugar with MustMatchers {
 
   "When an existing job is queried, it" should "be returned" in {
     val jobRepo = mock[JobRepository]
-    val job = Job(10, "test@mail.com",
-      """{"colors":1,"customers":2,"demands":[[1,1,1],[1,1,0]]}""", LocalDateTime.parse("2019-11-09T12:34:00"))
+    val jobSpec = JobSpecification(1, Array(
+      Batch(Array(Paint(1, Finish.Matte))),
+      Batch(Array(Paint(1, Finish.Glossy)))
+    ))
+    val job = Job("test@mail.com", jobSpec, None, LocalDateTime.parse("2019-11-09T12:34:00"), jobId=10)
     when(jobRepo.findById(any[Long])).thenReturn(Future.successful(Some(job)))
     val chronoService = mock[ChronoService]
     val subject = new JobService(jobRepo,chronoService)
@@ -28,7 +31,7 @@ class JobServiceSpec extends AsyncFlatSpec with MockitoSugar with MustMatchers {
     result match {
       case Some(job) =>
         job.userEmail must be("test@mail.com")
-        job.dateTime.toString must be("2019-11-09T12:34")
+        job.created.toString must be("2019-11-09T12:34")
         //job.request
       case _ =>
         fail

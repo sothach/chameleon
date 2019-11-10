@@ -1,13 +1,11 @@
 package persistence
 
-import java.time.LocalDateTime
-
 import akka.actor.ActorSystem
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import com.typesafe.config.{Config, ConfigFactory}
 import fixtures.DatabaseFixture
-import model.{Job, JobStatus}
-import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, MustMatchers}
+import model._
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, MustMatchers}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.db.Database
 import play.api.db.slick.DatabaseConfigProvider
@@ -15,32 +13,62 @@ import slick.basic.{BasicProfile, DatabaseConfig}
 import slick.jdbc.JdbcProfile
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 
-class JobRepoSpec extends AsyncFlatSpec with MockitoSugar with MustMatchers
+class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
   with ForAllTestContainer with BeforeAndAfterAll {
-  private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
+  info("Specification of features of the persistence mechanism")
 
+  private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
+  private implicit val ec: ExecutionContext = system.dispatcher
   override val container = PostgreSQLContainer()
   private implicit val dbConfigProvider: DatabaseConfigProvider = new DatabaseConfigProvider {
     override def get[P <: BasicProfile]: DatabaseConfig[P] =
       DatabaseConfig.forConfig[JdbcProfile]("slick.dbs.default", configureDb()).asInstanceOf[DatabaseConfig[P]]
   }
 
-  "When a job is created and stored, it" should
-    "be retrievable by user's email" in {
+  val jobSpec = JobSpecification(1, Array(
+    Batch(Array(Paint(1, Finish.Matte))),
+    Batch(Array(Paint(1, Finish.Glossy)))
+  ))
+
+  "When a job is created and stored, it" should "be retrievable by user's email" in {
     val subject = new JobRepository()
+    val userEmail = "test1@mail.com"
+    val process = for {
+      _ <- subject.create(Job(userEmail,jobSpec))
+      r <- subject.findByUserEmail(userEmail)
+    } yield r
 
-    subject.create(Job(0, "test1@mail.com", "", LocalDateTime.now(), JobStatus.Created))
-
-    val result = Await.result(subject.findByUserEmail("test1@mail.com"), 2 seconds)
+    val result = Await.result(process, 2 seconds)
     result match {
       case job +: _ =>
-        job.userEmail must be("test1@mail.com")
+        job.userEmail must be(userEmail)
       case unexpected =>
         fail(unexpected.toString())
+    }
+  }
+
+  "When a job is updated, the changes" should "be persisted in the database" in {
+    val subject = new JobRepository()
+    val solution = MixSolution.withPaints(Seq(Paint(1).gloss,Paint(1).matte))
+    val userEmail = "test2@mail.com"
+    val process = for {
+      job <- subject.create(Job(userEmail,jobSpec))
+      _ <- subject.update(job.withSolution(solution))
+      r <- subject.findById(job.jobId)
+    } yield r
+
+    val result = Await.result(process, 2 seconds)
+    result match {
+      case Some(job) =>
+        job.userEmail must be(userEmail)
+        job.status must be(JobStatus.Completed)
+        job.result.isDefined must be(true)
+      case None =>
+        fail
     }
   }
 

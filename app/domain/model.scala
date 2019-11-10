@@ -13,23 +13,14 @@ package object model {
     }
   }
 
-  case class Job(jobId: Long, userEmail: String, request: String,
-                 dateTime: LocalDateTime = LocalDateTime.now,
-                 status: JobStatus.JobStatus = JobStatus.Created, version: Int = 0)
+  case class Job(userEmail: String, request: JobSpecification, result: Option[MixSolution] = None,
+                 created: LocalDateTime = LocalDateTime.now,
+                 status: JobStatus.JobStatus = JobStatus.Created, jobId: Long = 0, version: Int = 0) {
+    def withSolution(solution: MixSolution): Job = copy(result=Some(solution), status=JobStatus.Completed)
+  }
   object Job {
    implicit val format: Format[Job] = Json.format
   }
-
-  /*
-      {
-      "colors": 1,
-      "customers": 2,
-      "demands": [
-        [1, 1, 1],
-        [1, 1, 0]
-      ]
-    }
-   */
 
   object Finish extends Enumeration {
     type Finish = Value
@@ -45,26 +36,26 @@ package object model {
       Matte
     }
   }
-  case class Color (color: Int, finish: Finish = Glossy) {
+  case class Paint(color: Int, finish: Finish = Glossy) {
     require(color > 0, s"color code must be 1 of above ($color)")
-    def matte: Color = copy(finish = Matte)
-    def gloss: Color = copy(finish = Glossy)
+    def matte: Paint = copy(finish = Matte)
+    def gloss: Paint = copy(finish = Glossy)
   }
-  object Color {
-    implicit val format: Format[Color] = new Format[Color] {
-      override def writes(o: Color): JsValue = Json.toJson(o.color)
-      override def reads(json: JsValue): JsResult[Color] = json.validate[Int].map(o => Color(o))
+  object Paint {
+    implicit val format: Format[Paint] = new Format[Paint] {
+      override def writes(o: Paint): JsValue = Json.toJson(o.color)
+      override def reads(json: JsValue): JsResult[Paint] = json.validate[Int].map(o => Paint(o))
     }
   }
-  case class Batch(colors: Array[Color]) {
-    val mapped: Map[Int,Int] = colors.map { color =>
-      color.color -> color.finish.id
+  case class Batch(paints: Array[Paint]) {
+    val mapped: Map[Int,Int] = paints.map { paint =>
+      paint.color -> paint.finish.id
     }.toMap
   }
   object Batch {
     implicit val format: Format[Batch] = new Format[Batch] {
       override def writes(o: Batch): JsValue = {
-        val array = o.colors.length +: o.colors.flatMap(c => Array(c.color, c.finish.id))
+        val array = o.paints.length +: o.paints.flatMap(c => Array(c.color, c.finish.id))
         Json.toJson(array)
       }
 
@@ -73,43 +64,44 @@ package object model {
         require(batch.length >= 3)
         val items = batch.drop(1).sliding(2,2).map { pair =>
           assert(pair.length == 2, "color/finish spec requires two values")
-          Color(pair.head, Finish.of(pair.last))
+          Paint(pair.head, Finish.of(pair.last))
         }.toArray
         JsSuccess(Batch(items))
       }
     }
   }
 
-  case class JobSpecification(demands: Array[Batch]) {
+  case class JobSpecification(colors: Int, demands: Array[Batch]) {
     require(demands.length > 0, s"must be at least one demand (${demands.length})")
-    val customers: Int = demands.length
-    val colors: Int = demands.flatMap(_.colors.map(_.color)).distinct.length
+    val nbCustomers: Int = demands.length
+    val allColors: Array[Int] = demands.flatMap(_.paints.map(_.color)).distinct
   }
 
   object JobSpecification {
     private def readJson(json: JsValue) = {
+      val colors = (json \ "colors").as[Int]
       val demands = (json \ "demands").as[Array[Array[Int]]]
       val batches = demands.map { batch =>
         require(batch.length == (batch.head * 2) + 1, s"batch specification valid (${batch.mkString(",")})")
         val items = batch.drop(1).sliding(2,2).map { pair =>
           require(pair.length == 2, "color/finish spec requires two values")
-          Color(pair.head, Finish.of(pair.last))
+          Paint(pair.head, Finish.of(pair.last))
         }.toArray
         Batch(items)
       }
-      JsSuccess(JobSpecification(batches))
+      JsSuccess(JobSpecification(colors,batches))
     }
     private def writeJson(o: JobSpecification) = {
       val demands = o.demands.map { batch =>
-        val count = batch.colors.length
-        val colorSpecs = batch.colors.flatMap { color =>
+        val count = batch.paints.length
+        val colorSpecs = batch.paints.flatMap { color =>
           Array(color.color, color.finish.id)
         }
         count +: colorSpecs
       }
       val json = Json.toJson(demands)
       Json.parse(
-        s"""{"colors":${o.colors},"customers":${o.customers},"demands":$json}""")
+        s"""{"colors":${o.colors},"customers":${o.nbCustomers},"demands":$json}""")
     }
 
   // """{"colors":1,"customers":2,"demands":[[1,1,1],[1,1,0]]}"""
@@ -119,9 +111,11 @@ package object model {
   }
   }
 
-  case class MixSolution(batch: Batch)
+  case class MixSolution(batch: Batch) {
+    val legacyFormat: String = batch.paints.map(_.color).mkString(" ")
+  }
   object MixSolution {
-    def withColors(colors: Seq[Color]): MixSolution = {
+    def withPaints(colors: Seq[Paint]): MixSolution = {
       MixSolution(Batch(colors.toArray))
     }
     implicit val format: Format[MixSolution] = Json.format
