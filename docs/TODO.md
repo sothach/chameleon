@@ -16,3 +16,4 @@ AssertionException, to remove from processing stream (return a 4xx status)~~
 *  Deploy to Heroku (Dockefile)
 *  Updated API?
 *  ~~i18n for response messages~~ (note: json errors not translated)
+*  API docs: swagger?
