@@ -15,3 +15,12 @@ postgres=# create database jobsdb;
 ```bash
 % docker stop postgres
 ```
+
+## Add application secret to cloud environment
+```bash
+APPLICATION_SECRET=`sbt playGenerateSecret`
+```
+E.g., locally:
+```bash
+% docker run -p 9000:9000 -e play.http.secret.key=$APPLICATION_SECRET dscr.io/sothach/chameleon:latest
+```
