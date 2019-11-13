@@ -26,11 +26,19 @@ class BigTest extends FlatSpec with Matchers with OptionValues with MockitoSugar
   private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
   implicit val ec: scala.concurrent.ExecutionContext = system.dispatcher
   private val subject = new OptimizerUsingPermutations
+  info("Ensure the solution behaves well for large requests")
 
-  "A large request (> 2 million t-values)" should
+  "A quite large request (3000 - epsilon t-values)" should
+    "be successfully optimized" in {
+    val request = RequestGenerator.generateRequest(55, 54)
+    val result = Await.result(subject.optimize(request), Duration.Inf)
+    result.value.finishes.length should be(55)
+  }
+
+  "A large request (> 3000 t-values)" should
     "fail the optimizer's preconditions" in {
     val t = intercept[IllegalArgumentException] {
-      val request = RequestGenerator.generateRequest(2000, 2000)
+      val request = RequestGenerator.generateRequest(55, 55)
       Await.result(subject.optimize(request), Duration.Inf)
     }
     t.getMessage should include("sum of all t-values in request should not exceed 3000")
@@ -49,7 +57,7 @@ class BigTest extends FlatSpec with Matchers with OptionValues with MockitoSugar
         "mixer-service.process.parallelism" -> "100",
         "mixer-service.limits.max-colors" -> "2000",
         "mixer-service.limits.max-customers" -> "2000",
-        "mixer-service.limits.max-t-values" -> "3000"
+        "mixer-service.limits.t-max" -> "3000"
       ).asJava))
     val lifecycle = new DefaultApplicationLifecycle
     val solution = Some(MixSolution(Seq(Glossy, Glossy, Matte, Glossy)))

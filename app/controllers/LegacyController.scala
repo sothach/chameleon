@@ -20,7 +20,6 @@ class LegacyController @Inject()(mixer: MixService, cc: ControllerComponents)
     Action.async { implicit request =>
       lazy val messages = messagesApi.preferred(request)
       lazy val impossible = messages("request.not.solvable")
-      logger.debug(s"solve: $spec")
       val fakeUser = EmailAddress("faed@mail.org").get
       val source = Source.single(Job(fakeUser, spec))
       val response = singleResult(mixer.seekSolutions(source)) map {
@@ -47,16 +46,17 @@ class LegacyController @Inject()(mixer: MixService, cc: ControllerComponents)
       }
     }
 
-  private def singleResult(result: Future[Seq[Try[Job]]]) = result map { value =>
-    value.headOption match {
-      case Some(result) => result
-      case None =>
-        Failure(ProcessingError("processing.error.no-results"))
+  private def singleResult(result: Future[Seq[Try[Job]]]) =
+    result map { value =>
+      value.headOption match {
+        case Some(result) => result
+        case None =>
+          Failure(ProcessingError("processing.error.no-results"))
+      }
     }
-  }
 
   private def renderResponse(solution: MixSolution)
-                            (implicit request: Request[AnyContent]) = render {
+                   (implicit request: Request[AnyContent]) = render {
     case Accepts.Json() =>
       import conversions.JsonFormatters.mixFormat
       Ok(Json.toJson(solution))

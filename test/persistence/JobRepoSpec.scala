@@ -14,7 +14,7 @@ import slick.jdbc.JdbcProfile
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
@@ -51,6 +51,22 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
     }
   }
 
+  "When an attempt is made to update a job concurrently, one update" should
+    "fail with a useful result" in {
+    val subject = new JobRepository()
+    val userEmail = EmailAddress("test2@mail.com").value
+    val process = for {
+      job <- subject.create(Job(userEmail,jobSpec))
+      update1 <- subject.update(job)
+      update2 <- subject.update(job)
+    } yield Seq(update1,update2)
+
+    val t = intercept[RuntimeException] {
+      Await.result(process, 10 seconds)
+    }
+    t.getMessage must include("Concurrent update failure")
+  }
+
   "When a job is updated, the changes" should "be persisted in the database" in {
     val subject = new JobRepository()
     val solution = MixSolution(Seq(Finish.Glossy,Finish.Matte))
@@ -68,6 +84,25 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
         job.status must be(JobStatus.Completed)
         job.result.isDefined must be(true)
       case None =>
+        fail
+    }
+  }
+
+  "all existing jobs" should
+    "be returned" in {
+    val subject = new JobRepository()
+    val inserts = Future.sequence((1 to 10) map { i =>
+      subject.create(Job(EmailAddress(s"test$i@mail.com").value,jobSpec))
+    })
+    val process = for {
+      _ <- inserts
+      r <- subject.findAll
+    } yield r
+    val result = Await.result(process, 2 seconds)
+    result match {
+      case jobs if jobs.nonEmpty =>
+        jobs.size >= 10 must be(true)
+      case _ =>
         fail
     }
   }

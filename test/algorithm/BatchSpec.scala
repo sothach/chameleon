@@ -7,6 +7,7 @@ import org.scalatest.{AsyncFlatSpec, FlatSpec, Matchers, OptionValues}
 class BatchSpec extends AsyncFlatSpec with Matchers with OptionValues {
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
   private val subject = new OptimizerUsingPermutations
+  info("Test a number of different batches of mix requests")
 
   import Finish._
   import subject.optimize

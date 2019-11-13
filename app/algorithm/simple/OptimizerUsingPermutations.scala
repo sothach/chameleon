@@ -1,6 +1,5 @@
 package algorithm.simple
 
-import akka.actor.ActorSystem
 import algorithm.BatchOptimizer
 import javax.inject.Inject
 import model.{Finish, JobSpecification, MixSolution}
@@ -10,7 +9,6 @@ import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
 class OptimizerUsingPermutations @Inject()(implicit ec: ExecutionContext) extends BatchOptimizer {
-  private val logger = Logger(this.getClass)
   private val matteFinish = 1
   private val glossFinish = 0
   private case class CustomerFinishes(mattes: Map[Int, Int], glossy: Set[(Int, Int)])
@@ -21,17 +19,14 @@ class OptimizerUsingPermutations @Inject()(implicit ec: ExecutionContext) extend
   def optimize(jobSpec: JobSpecification): Future[Option[MixSolution]] = Future {
     require(jobSpec.demands.flatMap(_.paints).length < 3000,
       "sum of all t-values in request should not exceed 3000")
-    logger.debug(s"request: $jobSpec")
     val data = jobSpec.demands.map { batch =>
       batch.paints.flatMap(p => Array(p.color, p.finish.id))
     }
     val solution = start(jobSpec, sliceByFinish(data.iterator))
     if (solution.isEmpty) {
-      logger.debug("no solution found")
       None
     } else {
       val result = MixSolution(solution.map(Finish(_)).toSeq)
-      logger.debug(s"solution: $result")
       Some(result)
     }
   }

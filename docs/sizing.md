@@ -6,5 +6,5 @@ The sum of all the T values for the customers in a request will not exceed 3000.
 ```
 mixer-service.limits.max-colors=2000
 mixer-service.limits.max-customers=2000
-mixer-service.limits.max-t-values=3000
+mixer-service.limits.t-max=3000
 ```

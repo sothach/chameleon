@@ -38,8 +38,6 @@ class JobRepository @Inject()(implicit system: ActorSystem,
   val jobs = TableQuery[JobTable]
   type JobStreamQuery = Query[Job, JobTable#TableElementType, Seq]
 
-  def createTable(): DBIOAction[Unit, NoStream, Effect.Schema] = jobs.schema.createIfNotExists
-
   def findAll: Future[Seq[Job]] = db.run(jobs.result)
 
   def findById(id: Long): Future[Option[Job]] =

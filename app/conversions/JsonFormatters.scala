@@ -74,6 +74,6 @@ object JsonFormatters {
     }
   }
 
-  implicit val jobFormat: OFormat[Job] = Json.format[Job]
   implicit val mixFormat: OFormat[MixSolution] = Json.format[MixSolution]
+  implicit val jobFormat: OFormat[Job] = Json.format[Job]
 }

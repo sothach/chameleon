@@ -9,10 +9,11 @@ AssertionException, to remove from processing stream (return a 4xx status)~~
 *  ~~Move repo column mappers to separate unit~~
 *  ~~Make optimizer algorithm configurable (guice)~~
 *  ~~SCoverage~~
-*  Repo tests for concurrent, optimistic locks
+*  ~~Repo tests for concurrent, optimistic locks~~
 *  Tests: add for edge cases, error handling, etc.
-*  Run some large tests, to the given size limits
+*  ~~Run some large tests, to the given size limits~~
 *  Travis, coveralls, codacy (badges)
 *  Deploy to Heroku (Dockefile)
 *  Updated API?
 *  ~~i18n for response messages~~ (note: json errors not translated)
+*  API docs: swagger?
