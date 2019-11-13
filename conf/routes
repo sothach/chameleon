@@ -1,4 +1,3 @@
 
 GET        /v1/                        controllers.LegacyController.request(request: JobSpecification)
 GET        /api/v1/jobs/request        controllers.LegacyController.request(request: JobSpecification)
-GET        /api/v2/jobs/request        controllers.ApiController.index()

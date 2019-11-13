@@ -1,12 +1,13 @@
 package services
 
-import model.{Batch, Paint, JobSpecification, MixSolution}
-import org.scalatest.{FlatSpec, MustMatchers, OptionValues}
+import algorithm.simple.OptimizerUsingPermutations
+import model._
+import org.scalatest.{AsyncFlatSpec, MustMatchers, OptionValues}
 
 import scala.language.postfixOps
 
-class PlannerSpec extends FlatSpec with MustMatchers with OptionValues {
-
+class PlannerSpec extends AsyncFlatSpec with MustMatchers with OptionValues {
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
   /*
   Integer N, the number of paint colors,
   integer M, the number of customers.
@@ -33,19 +34,17 @@ class PlannerSpec extends FlatSpec with MustMatchers with OptionValues {
    */
 
   "When job specification is processed, it" should "return the expected solution" in {
-    val subject = new PaintShopPlanner()
+    val subject = new OptimizerUsingPermutations()
     val color1 = Paint(1)
     val color2 = Paint(2)
     val color5 = Paint(5)
-    val request = JobSpecification(5,Array(
-        Batch(Array(color1.matte)),
-        Batch(Array(color1.gloss,color2.gloss)),
-        Batch(Array(color5.gloss))
-      ))
-    val result = subject.solve(request)
-    result match {
+    val request = JobSpecification(5, Array(
+      Batch(color1.matte),
+      Batch(color1.gloss, color2.gloss),
+      Batch(color5.gloss)))
+    subject.optimize(request) map {
       case Some(MixSolution(batch)) =>
-        batch.paints must be(Array(color1.matte,color1.gloss,color1.gloss,color1.gloss,color1.gloss))
+        batch must be(Array(Finish.Matte, Finish.Glossy, Finish.Glossy, Finish.Glossy, Finish.Glossy))
       case None =>
         fail("solution not found")
     }

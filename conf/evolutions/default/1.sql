@@ -4,7 +4,7 @@
 
 CREATE TABLE job(
    job_id SERIAL PRIMARY KEY,
-   user_email TEXT UNIQUE NOT NULL,
+   user_email TEXT NOT NULL,
    request TEXT NOT NULL,
    result TEXT DEFAULT NULL,
    status TEXT DEFAULT 'Created',

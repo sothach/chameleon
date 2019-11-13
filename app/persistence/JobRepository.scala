@@ -1,20 +1,17 @@
 package persistence
 
-import java.sql.Timestamp
-import java.time.{LocalDateTime, ZoneOffset}
+import java.time.LocalDateTime
 
 import akka.actor.ActorSystem
 import com.google.inject.Singleton
 import javax.inject.Inject
 import model.JobStatus.JobStatus
-import model.{Job, JobSpecification, JobStatus, MixSolution}
+import model.{EmailAddress, Job, JobSpecification, JobStatus, MixSolution}
 import play.api.Logger
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import play.api.libs.json.Json
-import slick.ast.BaseTypedType
 import slick.dbio.Effect
+import slick.jdbc.JdbcProfile
 import slick.jdbc.PostgresProfile.api._
-import slick.jdbc.{JdbcProfile, JdbcType}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -22,26 +19,13 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 class JobRepository @Inject()(implicit system: ActorSystem,
                               protected val dbConfigProvider: DatabaseConfigProvider)
                                                   extends HasDatabaseConfigProvider[JdbcProfile] {
+  import SlickMappers._
   private implicit val ec: ExecutionContextExecutor = system.dispatchers.lookup("persistence-context")
   private val logger = Logger(this.getClass)
-  implicit val statusMapper: JdbcType[JobStatus] with BaseTypedType[JobStatus] =
-    MappedColumnType.base[JobStatus, String](e => e.toString, s => JobStatus.withName(s))
-  implicit val jobSpecMapper: JdbcType[JobSpecification] with BaseTypedType[JobSpecification] =
-    MappedColumnType.base[JobSpecification, String](
-      jobSpec => Json.toJson(jobSpec).toString,
-      s => Json.parse(s).validate[JobSpecification].get)
-  implicit val solutionMapper: JdbcType[MixSolution] with BaseTypedType[MixSolution] =
-    MappedColumnType.base[MixSolution, String](
-      jobSpec => Json.toJson(jobSpec).toString,
-      s => Json.parse(s).validate[MixSolution].get)
-  implicit val localDateTimeColumnType: JdbcType[LocalDateTime] with BaseTypedType[LocalDateTime] =
-    MappedColumnType.base[LocalDateTime, Timestamp](
-      d => Timestamp.from(d.toInstant(ZoneOffset.ofHours(0))),
-      d => d.toLocalDateTime)
 
   class JobTable(tag: Tag) extends Table[Job](tag, "job") {
     def jobId     = column[Long]      ("job_id", O.PrimaryKey, O.AutoInc)
-    def userEmail = column[String]    ("user_email")
+    def userEmail = column[EmailAddress] ("user_email")
     def request   = column[JobSpecification]    ("request")
     def result    = column[Option[MixSolution]] ("result")
     def created   = column[LocalDateTime]  ("created")
@@ -77,9 +61,9 @@ class JobRepository @Inject()(implicit system: ActorSystem,
     db.run(action.transactionally)
   }
 
-  def findByUserEmail(userEmail: String): Future[Seq[Job]] = {
+  def findByUserEmail(userEmail: EmailAddress): Future[Seq[Job]] = {
     val q = jobs
-      .filter(_.userEmail.toLowerCase === userEmail.trim.toLowerCase)
+      .filter(_.userEmail === userEmail)
       .filter(_.status =!= JobStatus.Deleted)
     db.run(q.result)
   }

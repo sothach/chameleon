@@ -15,10 +15,11 @@
     <logger name="org.scalatest" level="WARN" />
     <logger name="org.scalatestplus" level="WARN" />
     <logger name="org.org.testcontainers" level="WARN" />
-    <logger name="services" level="DEBUG" />
-    <logger name="domain" level="DEBUG" />
-    <logger name="persistence" level="DEBUG" />
-    <logger name="controllers" level="DEBUG" />
+    <logger name="services" level="INFO" />
+    <logger name="domain" level="INFO" />
+    <logger name="algorithm" level="INFO" />
+    <logger name="persistence" level="INFO" />
+    <logger name="controllers" level="INFO" />
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />

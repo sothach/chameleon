@@ -5,7 +5,7 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import com.typesafe.config.{Config, ConfigFactory}
 import fixtures.DatabaseFixture
 import model._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, MustMatchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, MustMatchers, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.db.Database
 import play.api.db.slick.DatabaseConfigProvider
@@ -18,7 +18,7 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
 
 class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
-  with ForAllTestContainer with BeforeAndAfterAll {
+  with ForAllTestContainer with BeforeAndAfterAll with OptionValues {
   info("Specification of features of the persistence mechanism")
 
   private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
@@ -30,13 +30,13 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
   }
 
   val jobSpec = JobSpecification(1, Array(
-    Batch(Array(Paint(1, Finish.Matte))),
-    Batch(Array(Paint(1, Finish.Glossy)))
+    Batch(Paint(1, Finish.Matte)),
+    Batch(Paint(1, Finish.Glossy))
   ))
 
   "When a job is created and stored, it" should "be retrievable by user's email" in {
     val subject = new JobRepository()
-    val userEmail = "test1@mail.com"
+    val userEmail = EmailAddress("test1@mail.com").value
     val process = for {
       _ <- subject.create(Job(userEmail,jobSpec))
       r <- subject.findByUserEmail(userEmail)
@@ -53,8 +53,8 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
 
   "When a job is updated, the changes" should "be persisted in the database" in {
     val subject = new JobRepository()
-    val solution = MixSolution.withPaints(Seq(Paint(1).gloss,Paint(1).matte))
-    val userEmail = "test2@mail.com"
+    val solution = MixSolution(Seq(Finish.Glossy,Finish.Matte))
+    val userEmail = EmailAddress("test2@mail.com").value
     val process = for {
       job <- subject.create(Job(userEmail,jobSpec))
       _ <- subject.update(job.withSolution(solution))
@@ -95,10 +95,10 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
 
   private def configureDb(): Config = {
     ConfigFactory.parseMap(Map(
+      "slick.dbs.default.driver" -> "slick.driver.PostgresDriver$",
       "slick.dbs.default.db.url" -> container.jdbcUrl,
       "slick.dbs.default.db.user" -> container.username,
       "slick.dbs.default.db.password" -> container.password,
-      "slick.dbs.default.driver" -> "slick.driver.PostgresDriver$",
       "slick.dbs.default.db.driver" -> "org.postgresql.Driver",
       "slick.dbs.default.db.numThreads" -> "1",
       "slick.dbs.default.db.maxConnections" -> "10").asJava)

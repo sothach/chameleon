@@ -17,9 +17,12 @@ libraryDependencies ++= Seq(
   "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
   "org.mockito" % "mockito-all" % "2.0.2-beta" % Test,
   "com.dimafeng" %% "testcontainers-scala" % "0.33.0" % Test,
-  "org.testcontainers" % "postgresql" % "1.12.3" % Test
+  "org.testcontainers" % "postgresql" % "1.12.3" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.2" % Test
 )
 
 import play.sbt.routes.RoutesKeys.routesImport
 routesImport += "model.JobSpecification"
 routesImport += "conversions.Binders._"
+
+coverageExcludedPackages := "<empty>;Reverse.*;router.*;controllers.javascript;play.api.*;views.html.*"

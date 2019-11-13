@@ -1,36 +1,26 @@
 package domain
 
-import model._
-import org.scalatest.{FlatSpec, Matchers}
+import model.{Batch, EmailAddress, Finish, Job, JobSpecification, JobStatus, Paint}
+import org.scalatest.{FlatSpec, Matchers, OptionValues}
 import play.api.libs.json.{JsError, JsSuccess, Json}
 
-class ModelSpec extends FlatSpec with Matchers {
+class ModelSpec extends FlatSpec with Matchers with OptionValues {
+  import conversions.JsonFormatters._
 
   "A Job" should "be defined" in {
     val jobSpec = JobSpecification(1, Array(
-      Batch(Array(Paint(1, Finish.Matte))),
-      Batch(Array(Paint(1, Finish.Glossy)))
+      Batch(Paint(1, Finish.Matte)),
+      Batch(Paint(1, Finish.Glossy))
     ))
-    val subject = Job("test@mail.com", jobSpec)
+    val subject = Job(EmailAddress("test@mail.com").value, jobSpec)
     subject.status should be(JobStatus.Created)
     subject.version should be(0)
   }
 
-  /*
-    {
-    "colors": 1,
-    "customers": 2,
-    "demands": [
-      [1, 1, 1],
-      [1, 1, 0]
-    ]
-  }
- */
-
   "A JobSpecification" should "be serialized as per the API spec" in {
     val batches = Array(
-      Batch(Array(Paint(1,Finish.Matte))),
-      Batch(Array(Paint(1,Finish.Glossy)))
+      Batch(Paint(1,Finish.Matte)),
+      Batch(Paint(1,Finish.Glossy))
     )
     val subject = JobSpecification(1,batches)
     val result = Json.toJson(subject)
@@ -38,7 +28,6 @@ class ModelSpec extends FlatSpec with Matchers {
     (result \ "colors").as[Int] should be(1)
     (result \ "customers").as[Int] should be(2)
     val demands = (result \ "demands").as[Array[Batch]]
-    println(s"demands=$demands")
   }
 
   "A JobSpecification string" should "be de-serialized to a domain object" in {
