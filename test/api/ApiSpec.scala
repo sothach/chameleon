@@ -212,7 +212,7 @@ class ApiSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite with F
   "badly-formed requests to the /api/v2/jobs/request endpoint" should {
     "not be processed" in {
       val json = """{"colors":2,"customers":2,"paints":[[1,1,0],[1,2,0]]}"""
-      val request = FakeRequest(GET, s"/v1/?input=$json")
+      val request = FakeRequest(GET, s"/api/v2/jobs/request")
         .withHeaders(FakeHeaders(Map(
           "Host" -> "localhost",
           "Content-Type" -> "application/json",

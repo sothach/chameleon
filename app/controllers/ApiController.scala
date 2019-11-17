@@ -76,7 +76,6 @@ class ApiController @Inject()(authority: Authorization,
       }
       response.recover {
         case t: ProcessingError =>
-          logger.warn(s"recovering with ${request.acceptedTypes}")
           logger.warn(s"recovering from ${t.getMessage}")
           InternalServerError(getMessage(t.key, t.params))
         case _ =>
