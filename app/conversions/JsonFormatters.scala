@@ -6,7 +6,7 @@ import play.api.libs.json._
 object JsonFormatters {
 
   implicit object emailFormat extends Format[EmailAddress] {
-    def writes(o: EmailAddress): JsValue = Json.toJson(o.toString)
+    def writes(o: EmailAddress): JsValue = Json.toJson(o.address)
     def reads(json: JsValue): JsResult[EmailAddress] =
       json.validate[String].map(o => EmailAddress(o).get)
   }
@@ -15,11 +15,6 @@ object JsonFormatters {
     def writes(o: JobStatus.Value): JsValue = Json.toJson(o.toString)
     def reads(json: JsValue): JsResult[JobStatus.Value] =
       json.validate[String].map(JobStatus.withName)
-  }
-
-  implicit object paintFormat extends Format[Paint] {
-    def writes(o: Paint): JsValue = Json.toJson(o.color)
-    def reads(json: JsValue): JsResult[Paint] = json.validate[Int].map(o => Paint(o))
   }
 
   implicit object batchFormat extends Format[Batch] {
@@ -48,18 +43,24 @@ object JsonFormatters {
 
   implicit object jobSpecFormat extends Format[JobSpecification] {
     def reads(json: JsValue): JsResult[JobSpecification] = {
-      val colors = (json \ "colors").as[Int]
-      val demands = (json \ "demands").as[Array[Array[Int]]]
-      val batches = demands.map { batch =>
-        require(batch.length == (batch.head * 2) + 1, s"batch specification valid (${batch.mkString(",")})")
-        val items = batch.drop(1).sliding(2, 2).map { pair =>
-          require(pair.length == 2, "color/finish spec requires two values")
-          Paint(pair.head, Finish(pair.last))
-        }.toArray
-        Batch(items)
+      val mColors = (json \ "colors").validate[Int]
+      val mDemands = (json \ "demands").validate[Array[Array[Int]]]
+      (mColors, mDemands) match {
+        case (JsSuccess(colors, _), JsSuccess(demands, _)) =>
+          val batches = demands.map { batch =>
+            require(batch.length == (batch.head * 2) + 1, s"batch specification valid (${batch.mkString(",")})")
+            val items = batch.drop(1).sliding(2, 2).map { pair =>
+              require(pair.length == 2, "color/finish spec requires two values")
+              Paint(pair.head, Finish(pair.last))
+            }.toArray
+            Batch(items)
+          }
+          JsSuccess(JobSpecification(colors, batches))
+        case _ =>
+          JsError()
       }
-      JsSuccess(JobSpecification(colors, batches))
     }
+
     def writes(o: JobSpecification): JsValue = {
       val demands = o.demands.map { batch =>
         val count = batch.paints.length
@@ -73,6 +74,14 @@ object JsonFormatters {
         s"""{"colors":${o.colors},"customers":${o.nbCustomers},"demands":$json}""")
     }
   }
+
+  implicit object userRoleFormat extends Format[UserRole.Value] {
+    def writes(o: UserRole.Value): JsValue = Json.toJson(o.toString)
+    def reads(json: JsValue): JsResult[UserRole.Value] =
+      json.validate[String].map(UserRole.withName)
+  }
+
+  implicit val userFormat: Format[User] = Json.format[User]
 
   implicit val mixFormat: OFormat[MixSolution] = Json.format[MixSolution]
   implicit val jobFormat: OFormat[Job] = Json.format[Job]

@@ -1,5 +1,11 @@
-request.error.nb-colors="# colors ({0}) should be in range 1 .. {1}"
-request.error.nb-customers="# customers ({0}) should be in range 1 .. {1}"
-request.error.nb-t-values="# t-values ({0}) should be in range 1 .. {1}"
+request.error.nb-colors=# colors ({0}) should be in range 1 .. {1}
+request.error.nb-customers=# customers ({0}) should be in range 1 .. {1}
+request.error.nb-t-values=# t-values ({0}) should be in range 1 .. {1}
 request.not.solvable=IMPOSSIBLE
-processing.error.no-results="no results returned"
+request.invalid.body=request body invalid
+request.invalid.user=user request invalid
+request.invalid.credential=invalid credentials
+processing.error.no-results=no results returned
+processing.error.storage=error storing: {0}
+processing.error.query=error querying {0}
+processing.error.update=error updating: {0}

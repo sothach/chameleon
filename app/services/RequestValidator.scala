@@ -23,7 +23,7 @@ class RequestValidator @Inject()(configuration: Configuration) {
     check(job.request.colors, maxColors, "request.error.nb-colors")
       .orElse(check(job.request.nbCustomers, maxCustomers, "request.error.nb-customers"))
       .orElse(check(tVals, tMax, "request.error.nb-t-values"))
-      .map(error => Failure(RequestError(error._1, error._2: _*)))
+      .map(error => Failure(RequestError(error._1, error._2)))
       .getOrElse(Try(job))
   }
 }

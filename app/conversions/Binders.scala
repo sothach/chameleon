@@ -1,6 +1,6 @@
 package conversions
 
-import model.JobSpecification
+import model.{EmailAddress, JobSpecification}
 import play.api.libs.json.Json
 import play.api.mvc.QueryStringBindable
 
@@ -14,7 +14,7 @@ object Binders {
           case Some(value) if value.isRight =>
             parseSpec(value)
           case _ =>
-            Left("Unable to bind input")
+            Left("missing/invalid job spec")
         }
         Some(result)
       }
@@ -24,12 +24,26 @@ object Binders {
       }
     }
 
+  implicit def emailBinder(implicit binder: QueryStringBindable[String]): QueryStringBindable[Option[EmailAddress]] =
+    new QueryStringBindable[Option[EmailAddress]] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Option[EmailAddress]]] = {
+        val maybeEmail = (for {
+          param <- binder.bind("email", params) if param.isRight
+          email <- param.toOption.map(EmailAddress(_))
+        } yield email).flatten
+        Some(Right(maybeEmail))
+      }
+
+      override def unbind(key: String, email: Option[EmailAddress]): String =
+        email.map(e => binder.unbind("email", e.address)).getOrElse("")
+    }
+
   private def parseSpec(value: Either[String, String]): Either[String, JobSpecification] = value match {
     case Right(json) => try {
       Json.parse(json).validate[JobSpecification].asEither.left.map(_.toString())
     } catch { case ex: Exception =>
         Left(ex.getMessage)
     }
-    case Left(t) => Left(s"Unable to bind input $t")
+    case Left(t) => Left(s"missing/invalid query parameter $t")
   }
 }

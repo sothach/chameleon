@@ -67,24 +67,10 @@ class BigTest extends FlatSpec with Matchers with OptionValues with MockitoSugar
       new RequestValidator(configuration), configuration, lifecycle)
 
     val user = EmailAddress("big@tester.org").get
-    val jobs = RequestGenerator.generateSeries(1000,100,70) map { spec =>
+    val jobs = RequestGenerator.generateSeries(1000,25,25) map { spec =>
       Job(user, spec)
     }
-    //val result = Await.result(subject.seekSolutions(Source.fromIterator(() => jobs)), 2 seconds)
-    val request = Job(user,RequestGenerator.generateRequest(2000, 2000))
-    val result = Await.result(subject.seekSolutions(Source.single(request)), 2 seconds)
-    result match {
-      case seq if seq.nonEmpty =>
-        println(s"#${seq.size} processed")
-        seq foreach {
-          case Success(mix) =>
-            println(s"success: $mix")
-          case Failure(t) =>
-            println(s"failure: ${t.getMessage}")
-        }
-      case _ =>
-        fail
-    }
+    Await.result(subject.seekSolutions(Source.fromIterator(() => jobs)), 2 seconds).size should be (1000)
   }
 
 }

@@ -1,11 +1,13 @@
 import java.time.LocalDateTime
 
+import model.UserRole.UserRole
+
 package object model {
   import model.Finish.{Finish, Glossy, Matte}
 
   object JobStatus extends Enumeration {
     type JobStatus = Value
-    val Created, Active, Completed, Failed, Deleted = Value
+    val Created, Active, Completed, Failed = Value
   }
 
   case class Job(userEmail: EmailAddress, request: JobSpecification, result: Option[MixSolution] = None,
@@ -51,7 +53,7 @@ package object model {
     def of(finish: Finish*): MixSolution = MixSolution(finish)
   }
 
-  case class EmailAddress(address: String) extends AnyVal
+  case class EmailAddress(address: String)
   object EmailAddress {
     final private val emailPattern =
       """^\s*([a-z0-9.!#$%&’'*+/=?^_`{|}~-]+)@([a-z0-9-]+(?:\.[a-z0-9-]+)*)\s*$""".r
@@ -61,11 +63,23 @@ package object model {
     }
   }
 
-  case class ProcessingError(key: String, params: String*) extends RuntimeException {
-    override val getMessage: String = s"RequestError($key: {${params.mkString(",")}}"
-  }
-  case class RequestError(key: String, params: String*) extends RuntimeException {
-    override val getMessage: String = s"RequestError($key: {${params.mkString(",")}}"
+  object UserRole extends Enumeration {
+    type UserRole = Value
+    val Customer, Admin = Value
   }
 
+  case class User(email: EmailAddress, role: UserRole = UserRole.Customer)
+
+  case class ProcessingError(key: String, params: Array[String] = Array.empty) extends RuntimeException {
+    override val getMessage: String = s"ProcessingError($key: {${params.mkString(",")}}"
+  }
+  object ProcessingError {
+    def apply(key: String, params: String*): ProcessingError = ProcessingError(key, params.toArray)
+  }
+  case class RequestError(key: String, params: Array[String] = Array.empty) extends RuntimeException {
+    override val getMessage: String = s"RequestError($key: {${params.mkString(",")}}"
+  }
+  object RequestError {
+    def apply(key: String, params: String*): RequestError = RequestError(key, params.toArray)
+  }
 }

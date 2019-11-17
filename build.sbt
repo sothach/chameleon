@@ -14,6 +14,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick-evolutions" % "4.0.2",
   "com.typesafe.play" %% "play-slick" % "4.0.2",
   "com.spotify" % "docker-client" % "8.9.0",
+  "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5",
+  "io.swagger" %% "swagger-play2" % "1.7.1",
 
   "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
   "org.mockito" % "mockito-all" % "2.0.2-beta" % Test,
@@ -24,9 +26,11 @@ libraryDependencies ++= Seq(
 
 import play.sbt.routes.RoutesKeys.routesImport
 routesImport += "model.JobSpecification"
+routesImport += "model.EmailAddress"
 routesImport += "conversions.Binders._"
 
-coverageExcludedPackages := "<empty>;Reverse.*;router.*;controllers.javascript;play.api.*;views.html.*"
+coverageExcludedPackages :=
+  """<empty>;Reverse.*;controllers.javascript.*;ReverseApiController.*;ReverseApiHelpController.*;router.*;security.TokenTool.*;controllers\..*Reverse.*;router.Routes.*;"""
 
 herokuAppName in Compile := "kid-chameleon"
 

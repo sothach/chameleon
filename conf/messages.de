@@ -1,5 +1,11 @@
-request.error.nb-colors="Anzahl der Farben ({0}) sollte zwischen 1 und {1} liegen"
-request.error.nb-customers="Anzahl der Kunden ({0}) sollte zwische 1 und {1} liegen"
-request.error.nb-t-values="Anzahl der t-Werte ({0}) sollte zwische 1 und {1} liegen"
-request.not.solvable="KEINE LÖSUNG"
-processing.error.no-results="Keine Ergebnisse verfügbar"
+request.error.nb-colors=Anzahl der Farben ({0}) sollte zwischen 1 und {1} liegen
+request.error.nb-customers=Anzahl der Kunden ({0}) sollte zwische 1 und {1} liegen
+request.error.nb-t-values=Anzahl der t-Werte ({0}) sollte zwische 1 und {1} liegen
+request.not.solvable=KEINE LÖSUNG
+request.invalid.body=ungültige eingabe
+request.invalid.user=benutzeranfrage ungültig
+request.invalid.credential=ungültiger Berechtigungsnachweis
+processing.error.no-results=keine Ergebnisse verfügbar
+processing.error.storage=fehler beim speichern: {0}
+processing.error.query=fehler beim abfragen: {0}
+processing.error.update=fehler beim aktualisieren: {0}

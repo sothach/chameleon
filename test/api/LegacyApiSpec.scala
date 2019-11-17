@@ -1,11 +1,14 @@
 package api
 
+import java.time.{LocalDateTime, ZoneOffset}
+
 import akka.actor.ActorSystem
 import algorithm.simple.OptimizerUsingPermutations
 import com.typesafe.config.{Config, ConfigFactory}
-import controllers.LegacyController
+import controllers.ApiController
 import model.Finish.{Glossy, Matte}
-import model.{Batch, Job, JobSpecification, Paint}
+import model.UserRole.{Customer, UserRole}
+import model.{Batch, EmailAddress, Job, JobSpecification, Paint, UserRole}
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
@@ -16,19 +19,23 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import persistence.JobRepository
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.{DefaultApplicationLifecycle, bind}
+import play.api.mvc.BodyParsers.Default
 import play.api.test.Helpers._
-import play.api.test._
+import play.api.test.{FakeHeaders, _}
 import play.api.{Application, Configuration}
+import security.{Authorization, JwtUtility}
 import services.{ChronoService, JobService, MixService, RequestValidator}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
-class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting with MockitoSugar with MustMatchers {
+class LegacyApiSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting with MockitoSugar with MustMatchers {
   private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
   private implicit val ec: ExecutionContext = system.dispatcher
   private val chronoService = mock[ChronoService]
+  private val testDateTime = LocalDateTime.parse("2019-11-12T12:33:34")
+  when(chronoService.now) thenReturn(testDateTime)
   private val jobRepository = mock[JobRepository]
   when(jobRepository.create(any[Job])) thenAnswer ((context: InvocationOnMock) => {
     val args = context.getArguments
@@ -36,25 +43,32 @@ class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Inject
   })
   when(jobRepository.update(any[Job])) thenReturn(Future.successful(1))
   private val jobService = new JobService(jobRepository,chronoService)
-
+  private val applicationSecret = "secret"
+  private val testEmail = EmailAddress("test@mail.org").value
+  private val configuration = Configuration(ConfigFactory.load("test-application.conf"))
   override def fakeApplication(): Application = new GuiceApplicationBuilder()
-    .loadConfig(configureApp)
+    .loadConfig(configuration)
     .overrides(bind[JobRepository].toInstance(jobRepository),
                bind[JobService].toInstance(jobService),
                bind[ChronoService].toInstance(chronoService))
     .build()
+  private val stubs = stubControllerComponents()
+  val authority = new Authorization(chronoService, configuration, stubs.messagesApi, new Default(stubs.parsers))
+  private val authToken = () => new JwtUtility(applicationSecret,() => chronoService.now)
+    .createBearerToken(testEmail,Customer,testDateTime.plusMinutes(5)).value
 
   "LegacyController GET" should {
 
     "answer with the expected value from a new instance of controller" in {
       val jobSpec = JobSpecification.build(2, Batch(Paint(1, Glossy)), Batch(Paint(1, Glossy)))
-      val mixer = new MixService(new OptimizerUsingPermutations(), jobService, new RequestValidator(configureApp),
-        configureApp, new DefaultApplicationLifecycle)
-      val controller = new LegacyController(mixer, stubControllerComponents())
-      val response = controller.request(jobSpec).apply(
+      val mixer = new MixService(new OptimizerUsingPermutations(), jobService, new RequestValidator(configuration),
+        configuration, new DefaultApplicationLifecycle)
+      val controller = new ApiController(authority, mixer, jobService, stubControllerComponents())
+      val response = controller.optimize(jobSpec).apply(
         FakeRequest(GET, "/v1/")
           .withHeaders(FakeHeaders(Map(
             "Host" -> "localhost",
+            "Authorization" -> authToken(),
             "Accept-Language" -> "en",
             "Accept" -> "text/plain").toSeq)))
 
@@ -64,14 +78,15 @@ class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Inject
     }
 
     "answer with the expected Json value when Accept header appropriately set" in {
-      val jobSpec = JobSpecification.build(2, Batch(Paint(1, Glossy)), Batch(Paint(1, Glossy)))
-      val mixer = new MixService(new OptimizerUsingPermutations(), jobService, new RequestValidator(configureApp),
-        configureApp, new DefaultApplicationLifecycle)
-      val controller = new LegacyController(mixer, stubControllerComponents())
-      val response = controller.request(jobSpec).apply(
+      val jobSpec = JobSpecification.build(2, Batch(Paint(1).gloss), Batch(Paint(1).gloss))
+      val mixer = new MixService(new OptimizerUsingPermutations(), jobService, new RequestValidator(configuration),
+        configuration, new DefaultApplicationLifecycle)
+      val controller = new ApiController(authority, mixer, jobService, stubControllerComponents())
+      val response = controller.optimize(jobSpec).apply(
         FakeRequest(GET, "/v1/")
           .withHeaders(FakeHeaders(Map(
             "Host" -> "localhost",
+            "Authorization" -> authToken(),
             "Accept-Language" -> "en",
             "Accept" -> "application/json").toSeq)))
 
@@ -82,8 +97,10 @@ class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Inject
 
     "answer with the expected value from the application" in {
       val jobSpec = JobSpecification.build(1, Batch(Paint(1,Matte)), Batch(Paint(1,Glossy)))
-      val controller = inject[LegacyController]
-      val response = controller.request(jobSpec).apply(FakeRequest(GET, "/v1/"))
+      val controller = inject[ApiController]
+      val response = controller.optimize(jobSpec).apply(
+        FakeRequest(GET, "/v1/").withHeaders(FakeHeaders(Map(
+          "Authorization" -> authToken()).toSeq)))
 
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("text/plain")
@@ -95,6 +112,7 @@ class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Inject
       val request = FakeRequest(GET, url)
         .withHeaders(FakeHeaders(Map(
           "Host" -> "localhost",
+          "Authorization" -> authToken(),
           "Accept-Language" -> "en",
           "Accept" -> "text/plain").toSeq))
 
@@ -110,6 +128,7 @@ class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Inject
       val request = FakeRequest(GET, url)
         .withHeaders(FakeHeaders(Map(
           "Host" -> "localhost",
+          "Authorization" -> authToken(),
           "Accept-Language" -> "en",
           "Accept" -> "text/plain").toSeq))
       val response = route(app, request).get
@@ -124,26 +143,16 @@ class LegacyControllerSpec extends PlaySpec with GuiceOneAppPerSuite with Inject
       val request = FakeRequest(GET, url)
         .withHeaders(FakeHeaders(Map(
           "Host" -> "localhost",
+          "Authorization" -> authToken(),
           "Accept-Language" -> "en",
           "Accept" -> "text/plain").toSeq))
+
       val response = route(app, request).get
 
       status(response) mustBe UNPROCESSABLE_ENTITY
       contentType(response) mustBe Some("text/plain")
       contentAsString(response) must equal ("IMPOSSIBLE")
     }
-  }
-
-  private val applicationSecret = "secret"
-
-  private val configureApp: Configuration = {
-    val baseCfg = Configuration(ConfigFactory.load("test-application.conf"))
-    val extraConfig: Config = ConfigFactory.parseMap(Map(
-      "mixer-service.process.timeout" -> "2s",
-      "mixer-service.process.parallelism" -> "2",
-      "play.http.secret.key" -> applicationSecret
-    ).asJava)
-    baseCfg ++ Configuration(extraConfig)
   }
 
 }

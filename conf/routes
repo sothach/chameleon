@@ -1,3 +1,8 @@
+GET         /swagger.json               controllers.ApiHelpController.getResources
 
-GET        /v1/                        controllers.LegacyController.request(request: JobSpecification)
-GET        /api/v1/jobs/request        controllers.LegacyController.request(request: JobSpecification)
+GET         /v1/                        controllers.ApiController.optimize(request: JobSpecification)
+GET         /api/v1/jobs/request        controllers.ApiController.optimize(request: JobSpecification)
+
+POST        /api/v2/jobs/request        controllers.ApiController.processRequest
+GET         /api/v2/jobs/list           controllers.ApiController.listJobs(email: Option[EmailAddress] ?= None)
+

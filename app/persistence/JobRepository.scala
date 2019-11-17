@@ -62,7 +62,6 @@ class JobRepository @Inject()(implicit system: ActorSystem,
   def findByUserEmail(userEmail: EmailAddress): Future[Seq[Job]] = {
     val q = jobs
       .filter(_.userEmail === userEmail)
-      .filter(_.status =!= JobStatus.Deleted)
     db.run(q.result)
   }
 

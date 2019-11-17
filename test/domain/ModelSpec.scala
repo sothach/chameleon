@@ -1,6 +1,6 @@
 package domain
 
-import model.{Batch, EmailAddress, Finish, Job, JobSpecification, JobStatus, Paint}
+import model.{Batch, EmailAddress, Finish, Job, JobSpecification, JobStatus, Paint, User, UserRole}
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
 import play.api.libs.json.{JsError, JsSuccess, Json}
 
@@ -40,6 +40,23 @@ class ModelSpec extends FlatSpec with Matchers with OptionValues {
       case JsError(errors) =>
         fail(errors.map(_._2).mkString(","))
     }
+  }
+
+  "Paint definition" should "enforce it's constraints" in {
+    val t = intercept[IllegalArgumentException] {
+      JobSpecification(1, Array(Batch(Paint(0).matte), Batch(Paint(0).gloss)))
+    }
+    t.getMessage should include("color code must be >= 1 (not 0)")
+  }
+
+  "An invalid email address" should "not be constructed in" in {
+    EmailAddress("keine-klammeaffe") should be (empty)
+  }
+
+  "A User object" should "be serialized and deserialized" in {
+    val subject = User(EmailAddress("test@mail.org").value,UserRole.Customer)
+    val json = Json.toJson(subject)
+    Json.parse(json.toString).validate[User] should be(JsSuccess(subject))
   }
 
 }
