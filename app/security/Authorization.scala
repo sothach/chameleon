@@ -17,10 +17,10 @@ import scala.util.{Failure, Success, Try}
 
 class JwtUtility(secretKey: String, dateTime: () => LocalDateTime) {
   val authHeader = "Authorization" // : Bearer
-  val JwtSecretAlgo = "HS256"
+  val jwtSecretAlgo = "HS256"
 
   def createToken(payload: String): Option[String] = {
-    val header = JwtHeader(JwtSecretAlgo)
+    val header = JwtHeader(jwtSecretAlgo)
     val claimsSet = JwtClaimsSet(payload)
     val token = JsonWebToken(header, claimsSet, secretKey)
     if(validate(token).nonEmpty) {
@@ -54,7 +54,7 @@ class JwtUtility(secretKey: String, dateTime: () => LocalDateTime) {
   private def checkClaims(claims: Map[String, String]) =
     (for {
       _ <- claims.get("email")
-      _ <- claims.get("role").flatMap(r => Try(UserRole.withName(r)).toOption)
+      _ <- claims.get("role").flatMap(r => UserRole.of(r))
       exp <- claims.get("exp").filter(_.toLong > dateTime().toEpochSecond(ZoneOffset.UTC))
     } yield exp).isDefined
 
@@ -95,6 +95,7 @@ class Authorization @Inject()(chronoService: ChronoService,
   private def buildUser(values: Map[String, String]): Option[User] = for {
     emailAddr <- values.get("email")
     email <- EmailAddress(emailAddr.trim)
-    role <- values.get("role")
-  } yield (User(email, UserRole.withName(role.trim)))
+    roleName <- values.get("role")
+    role <- UserRole.of(roleName.trim)
+  } yield (User(email,role))
 }

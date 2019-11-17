@@ -4,6 +4,8 @@ import model.{EmailAddress, JobSpecification}
 import play.api.libs.json.Json
 import play.api.mvc.QueryStringBindable
 
+import scala.util.Try
+
 object Binders {
   import JsonFormatters._
 
@@ -39,11 +41,9 @@ object Binders {
     }
 
   private def parseSpec(value: Either[String, String]): Either[String, JobSpecification] = value match {
-    case Right(json) => try {
-      Json.parse(json).validate[JobSpecification].asEither.left.map(_.toString())
-    } catch { case ex: Exception =>
-        Left(ex.getMessage)
-    }
-    case Left(t) => Left(s"missing/invalid query parameter $t")
+    case Right(json) =>
+      Try(Json.parse(json).validate[JobSpecification].get).toEither.left.map(_.toString())
+    case Left(t) =>
+      Left(s"missing/invalid query parameter '$t'")
   }
 }

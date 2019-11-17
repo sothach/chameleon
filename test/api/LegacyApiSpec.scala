@@ -123,7 +123,7 @@ class LegacyApiSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting wit
       contentAsString(response) must include ("IMPOSSIBLE")
     }
 
-    "return a client error if badly formed request receivedr" in {
+    "return a client error if badly-formed request received" in {
       val url = """/v1/?input={"colors":1,"customers":2,demands":[[1,1,0],[1,2,0]]}"""
       val request = FakeRequest(GET, url)
         .withHeaders(FakeHeaders(Map(
@@ -135,7 +135,7 @@ class LegacyApiSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting wit
 
       status(response) mustBe BAD_REQUEST
       contentType(response) mustBe Some("text/plain")
-      contentAsString(response) must startWith ("Unexpected character")
+      contentAsString(response) must startWith ("com.fasterxml.jackson.core.JsonParseException: Unexpected character")
     }
 
     "returns a client error if the requested spec cannot be optimized" in {

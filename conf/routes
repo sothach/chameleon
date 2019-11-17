@@ -1,5 +1,3 @@
-GET         /swagger.json               controllers.ApiHelpController.getResources
-
 GET         /v1/                        controllers.ApiController.optimize(request: JobSpecification)
 GET         /api/v1/jobs/request        controllers.ApiController.optimize(request: JobSpecification)
 

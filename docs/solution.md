@@ -11,7 +11,7 @@ the requesting customer, the request and the date and time of the request.  The 
 optimize will also be recorded: success or failure, and in the former case, the solution returned.
 
 ## Akka-streams & Processing pipeline
-Based on the the 'pipes & filter' enterprise pattern, the implementation of the solution can be visualized
+Based on the the 'pipes & filters' enterprise pattern, the implementation of the solution can be visualized
 by the following flow:
 
 ```
@@ -25,7 +25,7 @@ by the following flow:
 4.  Solve
 5.  Finish
 
-Using a 'white-board-to-code' approach, this flow is implemented with the verbatim line below:
+Using a 'white-board-to-code' approach, this flow is implemented verbatim by the line below:
 ```
     source.async via verifyRequest via start via solve via finish runWith Sink.seq
 ```

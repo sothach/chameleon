@@ -8,7 +8,14 @@ object JsonFormatters {
   implicit object emailFormat extends Format[EmailAddress] {
     def writes(o: EmailAddress): JsValue = Json.toJson(o.address)
     def reads(json: JsValue): JsResult[EmailAddress] =
-      json.validate[String].map(o => EmailAddress(o).get)
+      json.validate[String].map(o => EmailAddress(o)) match {
+        case JsSuccess(Some(email),path) =>
+          JsSuccess(email,path)
+        case JsSuccess(_,_) =>
+          JsError("unable to parse email address")
+        case error @ JsError(_)=>
+          error
+      }
   }
 
   implicit object jobStatusFormat extends Format[JobStatus.Value] {

@@ -2,7 +2,6 @@ package controllers
 
 import akka.stream.scaladsl.Source
 import conversions.JsonFormatters._
-import io.swagger.annotations.{ApiParam, ApiResponse, ApiResponses}
 import javax.inject.{Inject, Singleton}
 import model.UserRole.{Admin, Customer}
 import model._
@@ -40,10 +39,7 @@ class ApiController @Inject()(authority: Authorization,
       }
     }
 
-  @ApiResponses(Array(
-    new ApiResponse(code = 400, message = "Invalid User role"),
-    new ApiResponse(code = 422, message = "Request not solvable")))
-  def optimize(@ApiParam(value = "Job to be optimized") jobSpec: JobSpecification): Action[AnyContent] =
+  def optimize(jobSpec: JobSpecification): Action[AnyContent] =
     authority.async { implicit request =>
       if (request.user.role == Customer) {
         processRequest(jobSpec)
@@ -75,6 +71,8 @@ class ApiController @Inject()(authority: Authorization,
         case Failure(t: RequestError) =>
           logger.warn(s"RequestError: ${getMessage(t.key, t.params)}")
           BadRequest(getMessage(t.key, t.params))
+        case _ =>
+          InternalServerError
       }
       response.recover {
         case t: ProcessingError =>

@@ -66,6 +66,8 @@ package object model {
   object UserRole extends Enumeration {
     type UserRole = Value
     val Customer, Admin = Value
+    def of(name: String): Option[UserRole] =
+      values.find(_.toString == name)
   }
 
   case class User(email: EmailAddress, role: UserRole = UserRole.Customer)
