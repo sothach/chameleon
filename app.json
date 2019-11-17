@@ -1,0 +1,23 @@
+{
+  "name": "chameleon",
+  "description": "Paint bacth optimizer service",
+  "repository": "https://github.com/sothach/chameleon",
+  "keywords": ["scala", "play"],
+  "scripts": {
+  },
+  "env": {
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/scala"
+    }
+  ]
+}
