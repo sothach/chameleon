@@ -3,18 +3,20 @@ package algorithm.simple
 import algorithm.BatchOptimizer
 import javax.inject.Inject
 import model.{Finish, JobSpecification, MixSolution}
-import play.api.Logger
+import com.kenshoo.play.metrics.Metrics
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
-class OptimizerUsingPermutations @Inject()(implicit ec: ExecutionContext) extends BatchOptimizer {
+class OptimizerUsingPermutations @Inject()(metrics: Metrics)(implicit ec: ExecutionContext) extends BatchOptimizer {
   private val matteFinish = 1
   private val glossFinish = 0
   private case class CustomerFinishes(mattes: Map[Int, Int], glossy: Set[(Int, Int)])
   private object CustomerFinishes {
     val empty: CustomerFinishes = CustomerFinishes(Map.empty, Set.empty)
   }
+  private val successful = metrics.defaultRegistry.counter("optimize-successful")
+  private val failures = metrics.defaultRegistry.counter("optimize-failures")
 
   def optimize(jobSpec: JobSpecification): Future[Option[MixSolution]] = Future {
     require(jobSpec.demands.flatMap(_.paints).length < 3000,
@@ -24,31 +26,14 @@ class OptimizerUsingPermutations @Inject()(implicit ec: ExecutionContext) extend
     }
     val solution = start(jobSpec, sliceByFinish(data.iterator))
     if (solution.isEmpty) {
+      failures.inc()
       None
     } else {
+      successful.inc()
       val result = MixSolution(solution.map(Finish(_)).toSeq)
       Some(result)
     }
   }
-
-  /*  @tailrec
-  def seekSolution(optimal: Seq[Int], perms: Seq[Int], nbCustomers: Int, position: Int,
-                   customerFinishes: CustomerFinishes): Seq[Int] = {
-    if(solution(optimal, nbCustomers, customerFinishes).nonEmpty) {
-      optimal
-    } else if (position < optimal.length) {
-      // set head to matte and try permutations
-      val updated = (matteFinish +: optimal.drop(1)).permutations
-      if(updated.hasNext) {
-        seekSolution(updated.next, nbCustomers, position + 1, customerFinishes)
-      } else {
-        Seq.empty
-      }
-    } else {
-      Seq.empty
-    }
-  }*/
-
 
   private def start(jobSpec: JobSpecification, customerFinishes: CustomerFinishes): Array[Int] = {
     var optimal = Seq.fill(jobSpec.colors)(glossFinish)

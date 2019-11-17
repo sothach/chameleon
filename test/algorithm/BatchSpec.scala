@@ -1,12 +1,14 @@
 package algorithm
 
 import algorithm.simple.OptimizerUsingPermutations
+import fixtures.TestMetrics
 import model._
-import org.scalatest.{AsyncFlatSpec, FlatSpec, Matchers, OptionValues}
+import org.scalatest.{AsyncFlatSpec, Matchers, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 
-class BatchSpec extends AsyncFlatSpec with Matchers with OptionValues {
+class BatchSpec extends AsyncFlatSpec with Matchers with OptionValues with MockitoSugar {
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
-  private val subject = new OptimizerUsingPermutations
+  private val subject = new OptimizerUsingPermutations(TestMetrics)
   info("Test a number of different batches of mix requests")
 
   import Finish._

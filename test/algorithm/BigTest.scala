@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import algorithm.simple.OptimizerUsingPermutations
 import com.typesafe.config.ConfigFactory
-import fixtures.RequestGenerator
+import fixtures.{RequestGenerator, TestMetrics}
 import model.Finish.{Glossy, Matte}
 import model._
 import org.mockito.Matchers._
@@ -25,7 +25,7 @@ import scala.util.{Failure, Success}
 class BigTest extends FlatSpec with Matchers with OptionValues with MockitoSugar {
   private implicit val system: ActorSystem = ActorSystem.create("test-actor-system")
   implicit val ec: scala.concurrent.ExecutionContext = system.dispatcher
-  private val subject = new OptimizerUsingPermutations
+  private val subject = new OptimizerUsingPermutations(TestMetrics)
   info("Ensure the solution behaves well for large requests")
 
   "A quite large request (3000 - epsilon t-values)" should

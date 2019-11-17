@@ -1,5 +1,6 @@
 package algorithm
 import algorithm.simple.OptimizerUsingPermutations
+import fixtures.TestMetrics
 import model._
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
 
@@ -10,7 +11,7 @@ import scala.concurrent.duration.Duration
 class LegacyTestSuite extends FlatSpec with Matchers with OptionValues {
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
   info("Execute the existing set of tests, from the provided files")
-  private val subject = new OptimizerUsingPermutations
+  private val subject = new OptimizerUsingPermutations(TestMetrics)
 
   "The algorithm" should
     "return the expected results for the set of test cases provided" in {

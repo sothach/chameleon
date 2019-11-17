@@ -3,9 +3,10 @@ package api
 import java.time.LocalDateTime
 
 import akka.actor.ActorSystem
+import com.kenshoo.play.metrics.Metrics
 import com.typesafe.config.ConfigFactory
 import conversions.JsonFormatters._
-import fixtures.RequestGenerator
+import fixtures.{RequestGenerator, TestMetrics}
 import model.UserRole.{Customer, UserRole}
 import model._
 import org.mockito.Matchers.any
@@ -36,7 +37,7 @@ class ControllerSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite
 
   private val testDateTime = LocalDateTime.parse("2019-11-12T12:33:34")
   val chronoService: ChronoService = new ChronoService {
-    override def now: LocalDateTime =testDateTime
+    override def now: LocalDateTime = testDateTime
   }
 
   private val jobRepository = mock[JobRepository]
@@ -62,6 +63,7 @@ class ControllerSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite
       .loadConfig(configuration)
       .overrides(bind[JobRepository].toInstance(jobRepository),
         bind[JobService].toInstance(jobService),
+        bind[Metrics].toInstance(TestMetrics),
         bind[ChronoService].toInstance(chronoService))
       .build()
   }

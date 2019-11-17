@@ -1,17 +1,18 @@
 # Solution Description
 This section describes the elements of the solution, both frameworks used and rationale, and design and coding
-decisions
+decisions, with particular reference to the requirements of the [Assigment](docs/task.md).
 
 ## Play Framework
 The service is built using the Play framework, as it provides a good starting point for this project: 
 it's convention-over-configuration approach to URL routes, configuration and HTTP actions simplify the work needed.
 The inclusion of Akka-streams in the framework is a further advantage, allowing the solution to scale as required,
-with internal and external reactive asynchronous semantics
+with internal and external reactive asynchronous semantics available out of the box.
 
 ## PostgreSql
 The storage requirements of the solution are straight-forward: a log of each job requested is kept, including 
 the requesting customer, the request and the date and time of the request.  The outcome of the attempt to 
-optimize will also be recorded: success or failure, and in the former case, the solution returned.
+optimize will also be recorded: success or failure, and in the former case, the solution returned. 
+An optimistic locking mechanism is implemented to prevent concurrent update issues.
 
 ## Akka-streams & Processing pipeline
 Based on the the 'pipes & filters' enterprise pattern, the implementation of the solution can be visualized
@@ -32,11 +33,11 @@ Using a 'white-board-to-code' approach, this flow is implemented verbatim by the
 ```
     source.async via verifyRequest via start via solve via finish runWith Sink.seq
 ```
-The framework, providing execution context and a supervisor removes the essential yet distracting
+The framework, providing execution context and a supervisor, removes the essential yet distracting
 matters of error handling and concurrency from the application code.
 
 The approach taken here is to 'flow' each request through the pipeline from start to finish, using Scala's `Try`
-container as the processing frame.  If any stage fails, the failure is passed thru and returned, when the client
+container as the processing frame.  If any stage fails, the failure is passed thru and returned, where the client
 is free to interpret the meaning of failure, for example, as a 4xxx or 5xx response code.
 
 Although this is only used for single requests at a time, the pipeline is capable of stream processing, unchanged.
@@ -53,7 +54,35 @@ arbitrary number codes.
 It is assumed that this service is deployed behind an API gateway, that is responsible for authenticating users.
 This gateway, on successful authentication, will have issued a time-limited JWToken, detailing the user's email
 address (used as a natural key) and role.  This service therefore is only concerned with authorization, using the
-assigned role for the JWT to determine what actions can be peformed by a suser.
+assigned role for the JWT to determine what actions can be performed by a user.  All production traffic must be
+over https to prevent tokens being intercepted and used malignantly.
 
+## Metrics
+Metrics for monitoring the service are available from the endpoint (e.g.):
+```
+http://localhost:9000/admin/metrics
+```
+And return a JSON document detailing JVM metrics and any metrics added by this service.  Currently, this is limited
+to the count of times the optimizer succeeded and failed to find a solution:
+```json
+    ...
+    "counters": {
+        "optimize-failures": {
+            "count": 0
+        },
+        "optimize-successful": {
+            "count": 6
+        }
+    }
+```
+In production, these metrics could be consumed bt, for example, Prometheus, and rendered in Grafana, to derive 
+rate information (e.g., tps) as well as setting alerts to notify of unusual conditions
 
+## Scalability
+The service is deployed as a [Heroku Dyno](https://www.heroku.com/dynos), providing the ability to scale and fail-over
+(e.g., if the hardware fails, the dyno manager will move an instance to new server and restart).  If auto-scaling is
+enabled, if request latency increases beyond a pre-set threshold (for example, if there is a sudden run on paint-shop
+jobs, or particularly comples optimizations are requested), the number of service instances running will be increased
+(up to a pre-set limit) to handle the load, and scaled back down again as conditions improve.
+For this to be possible, it is important that the service itself is stateless.
 

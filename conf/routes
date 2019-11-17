@@ -4,3 +4,5 @@ GET         /api/v1/jobs/request        controllers.ApiController.optimize(reque
 POST        /api/v2/jobs/request        controllers.ApiController.processRequest
 GET         /api/v2/jobs/list           controllers.ApiController.listJobs(email: Option[EmailAddress] ?= None)
 
+GET         /admin/metrics              com.kenshoo.play.metrics.MetricsController.metrics
+

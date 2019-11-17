@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
+import com.kenshoo.play.metrics.Metrics
 import com.typesafe.config.{Config, ConfigFactory}
 import model.Finish.Glossy
 import model.UserRole.{Admin, Customer, UserRole}
@@ -23,6 +24,7 @@ import play.api.{Application, Configuration}
 import security.JwtUtility
 import services.ChronoService
 import conversions.JsonFormatters._
+import fixtures.TestMetrics
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -49,6 +51,7 @@ class ApiSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite with F
     new GuiceApplicationBuilder()
       .loadConfig(configuration)
       .overrides(bind[ChronoService].toInstance(chronoService))
+      .overrides(bind[Metrics].toInstance(TestMetrics))
       .build()
   }
 

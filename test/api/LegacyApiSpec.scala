@@ -1,14 +1,16 @@
 package api
 
-import java.time.{LocalDateTime, ZoneOffset}
+import java.time.LocalDateTime
 
 import akka.actor.ActorSystem
 import algorithm.simple.OptimizerUsingPermutations
-import com.typesafe.config.{Config, ConfigFactory}
+import com.kenshoo.play.metrics.Metrics
+import com.typesafe.config.ConfigFactory
 import controllers.ApiController
+import fixtures.TestMetrics
 import model.Finish.{Glossy, Matte}
-import model.UserRole.{Customer, UserRole}
-import model.{Batch, EmailAddress, Job, JobSpecification, Paint, UserRole}
+import model.UserRole.Customer
+import model._
 import org.mockito.Matchers.any
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
@@ -26,7 +28,6 @@ import play.api.{Application, Configuration}
 import security.{Authorization, JwtUtility}
 import services.{ChronoService, JobService, MixService, RequestValidator}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
@@ -50,6 +51,7 @@ class LegacyApiSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting wit
     .loadConfig(configuration)
     .overrides(bind[JobRepository].toInstance(jobRepository),
                bind[JobService].toInstance(jobService),
+               bind[Metrics].toInstance(TestMetrics),
                bind[ChronoService].toInstance(chronoService))
     .build()
   private val stubs = stubControllerComponents()
@@ -61,7 +63,8 @@ class LegacyApiSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting wit
 
     "answer with the expected value from a new instance of controller" in {
       val jobSpec = JobSpecification.build(2, Batch(Paint(1, Glossy)), Batch(Paint(1, Glossy)))
-      val mixer = new MixService(new OptimizerUsingPermutations(), jobService, new RequestValidator(configuration),
+      val mixer = new MixService(new OptimizerUsingPermutations(TestMetrics),
+        jobService, new RequestValidator(configuration),
         configuration, new DefaultApplicationLifecycle)
       val controller = new ApiController(authority, mixer, jobService, stubControllerComponents())
       val response = controller.optimize(jobSpec).apply(
@@ -79,7 +82,8 @@ class LegacyApiSpec extends PlaySpec with GuiceOneAppPerSuite with Injecting wit
 
     "answer with the expected Json value when Accept header appropriately set" in {
       val jobSpec = JobSpecification.build(2, Batch(Paint(1).gloss), Batch(Paint(1).gloss))
-      val mixer = new MixService(new OptimizerUsingPermutations(), jobService, new RequestValidator(configuration),
+      val mixer = new MixService(new OptimizerUsingPermutations(TestMetrics),
+        jobService, new RequestValidator(configuration),
         configuration, new DefaultApplicationLifecycle)
       val controller = new ApiController(authority, mixer, jobService, stubControllerComponents())
       val response = controller.optimize(jobSpec).apply(
