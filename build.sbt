@@ -30,7 +30,7 @@ routesImport += "model.EmailAddress"
 routesImport += "conversions.Binders._"
 
 coverageExcludedPackages :=
-  """<empty>;Reverse.*;controllers.javascript.*;ReverseApiController.*;ReverseApiHelpController.*;router.*;security.TokenTool.*;controllers\..*Reverse.*;router.Routes.*;"""
+  """<empty>;Reverse.*;com.kenshoo.*;controllers.javascript.*;controllers.ReverseApiController.*;controllers.plainTextHttpErrorHandler.*;ReverseApiHelpController.*;router.*;security.TokenTool.*;controllers/..*Reverse.*;router.Routes.*;"""
 
 herokuAppName in Compile := "kid-chameleon"
 

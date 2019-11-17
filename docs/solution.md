@@ -20,7 +20,7 @@ by the following flow:
 
 ```
   +---------+    +--------+    +-------+    +-------+    +--------+
-  | Request | => | Verfiy | => | Start | => | Solve | => | Finish |
+  | Request | => | Verify | => | Start | => | Solve | => | Finish |
   +---------+    +--------+    +-------+    +-------+    +--------+
 ```
 1.  Request: the user-supplied request is transformed into the appropriate domain representation
@@ -33,7 +33,7 @@ Using a 'white-board-to-code' approach, this flow is implemented verbatim by the
 ```
     source.async via verifyRequest via start via solve via finish runWith Sink.seq
 ```
-The framework, providing execution context and a supervisor, removes the essential yet distracting
+The framework, providing execution context and a supervisor, abstracts the essential yet distracting
 matters of error handling and concurrency from the application code.
 
 The approach taken here is to 'flow' each request through the pipeline from start to finish, using Scala's `Try`
@@ -43,9 +43,9 @@ is free to interpret the meaning of failure, for example, as a 4xxx or 5xx respo
 Although this is only used for single requests at a time, the pipeline is capable of stream processing, unchanged.
 
 ## Domain modelling / DSL
-Rather than using raw data-types, such as strings and numbers, to represent the information consumed and generated,
+Rather than using raw data-types, such as strings and numbers to represent the information consumed and generated,
 this service uses a 'bounded context' style of domain model.  The advantages of this include:
-1.   The value input and output by the service are strictly validated, reducing errors, making error messages more
+1.   The values input and output by the service are strictly validated, reducing errors, making error messages more
 useful and, importantly, protecting the service for certain types of attack (e.g., SQL injection) at it's boundary
 2.  Reasoning about the application logic is done in the domain terminology, e.g., paint and finishes, rather than
 arbitrary number codes.
@@ -56,6 +56,9 @@ This gateway, on successful authentication, will have issued a time-limited JWTo
 address (used as a natural key) and role.  This service therefore is only concerned with authorization, using the
 assigned role for the JWT to determine what actions can be performed by a user.  All production traffic must be
 over https to prevent tokens being intercepted and used malignantly.
+
+A command-line utility is provided, `security.TokenTool`, to generate a limited-time JWT for testing purposes, 
+using the application secret set in the deployed service (e.g., APP_SECRET, available from the Heroku dashboard)
 
 ## Metrics
 Metrics for monitoring the service are available from the endpoint (e.g.):

@@ -135,7 +135,7 @@ class ApiSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite with F
 
   "valid color spec posted to the /api/v2/jobs/request endpoint" should {
     "be optimized and returned as Json" in {
-      val json = """{"colors":2,"customers":2,"demands":[[1,1,0],[1,2,0]]}"""
+      val json = """{"colors":5,"customers":5,"demands":[[3,1,1,2,0,4,0],[2,2,1,3,0],[2,3,1,1,0],[2,4,1,5,0],[1,5,1]]}"""
       val request = FakeRequest(POST, "/api/v2/jobs/request")
         .withHeaders(FakeHeaders(Map(
           "Host" -> "localhost",
@@ -150,7 +150,7 @@ class ApiSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite with F
         response.body.contentType must contain("application/json")
         response.body.isKnownEmpty mustBe false
         val result = Await.result(response.body.consumeData, 2 seconds)
-        result.utf8String mustBe """{"finishes":[0,0]}"""
+        result.utf8String mustBe """{"finishes":[0,0,0,1,1]}"""
       }
     }
   }

@@ -3,6 +3,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/sothach/chameleon/badge.svg?branch=master)](https://coveralls.io/github/sothach/chameleon?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2a3bec483a96489196102d5bfea2b8e2)](https://www.codacy.com/manual/sothach/chameleon?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=sothach/chameleon&amp;utm_campaign=Badge_Grade)
 
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+
 _Color mixer batch planning service_
 
 ## Documentation

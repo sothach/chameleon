@@ -40,18 +40,6 @@ class JobRepository @Inject()(implicit system: ActorSystem,
 
   def findAll: Future[Seq[Job]] = db.run(jobs.result)
 
-  private def streamQuery(query: TableQuery[JobTable]): DatabasePublisher[Job] = {
-    val disableAutoCommit = SimpleDBIO(_.connection.setAutoCommit(false))
-    val q = query.result
-      .transactionally
-      .withStatementParameters(
-        rsType = ResultSetType.ForwardOnly,
-        rsConcurrency = ResultSetConcurrency.ReadOnly,
-        fetchSize = 100)
-    logger.debug(s"streamQuery ${query.result.statements.head}")
-    db.stream(disableAutoCommit andThen q, bufferNext = true)
-  }
-
   def findById(id: Long): Future[Option[Job]] =
     db.run(findByIdQuery(id))
 
