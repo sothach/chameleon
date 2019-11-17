@@ -1,0 +1,2 @@
+curl -v -H "Host: localhost:9000" -H "Accept: text/plain" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBoaWxsaXBzLnJveUBnbWFpbC5jb20iLCJyb2xlIjoiQ3VzdG9tZXIiLCJleHAiOjE2MDc3NzY0MTR9.5oDakhugqO4iJTYdj8eT_zgugJZOoUHmnwd4PY6tF1E" \
+http://localhost:9000/api/v2/jobs/list

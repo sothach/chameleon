@@ -5,7 +5,7 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import com.typesafe.config.{Config, ConfigFactory}
 import fixtures.DatabaseFixture
 import model._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, MustMatchers, OptionValues}
+import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll, MustMatchers, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.db.Database
 import play.api.db.slick.DatabaseConfigProvider
@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
+class JobRepoSpec extends AsyncFlatSpec with MockitoSugar with MustMatchers
   with ForAllTestContainer with BeforeAndAfterAll with OptionValues {
   info("Specification of features of the persistence mechanism")
 
@@ -42,8 +42,7 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
       r <- subject.findByUserEmail(userEmail)
     } yield r
 
-    val result = Await.result(process, 2 seconds)
-    result match {
+    process map {
       case job +: _ =>
         job.userEmail must be(userEmail)
       case unexpected =>
@@ -77,8 +76,7 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
       r <- subject.findById(job.jobId)
     } yield r
 
-    val result = Await.result(process, 2 seconds)
-    result match {
+    process map {
       case Some(job) =>
         job.userEmail must be(userEmail)
         job.status must be(JobStatus.Completed)
@@ -88,18 +86,16 @@ class JobRepoSpec extends FlatSpec with MockitoSugar with MustMatchers
     }
   }
 
-  "all existing jobs" should
-    "be returned" in {
+  "all existing jobs" should "be returned" in {
     val subject = new JobRepository()
     val inserts = Future.sequence((1 to 10) map { i =>
-      subject.create(Job(EmailAddress(s"test$i@mail.com").value,jobSpec))
+      subject.create(Job(EmailAddress(s"test$i@mail.com").value, jobSpec))
     })
     val process = for {
       _ <- inserts
-      r <- subject.findAll
-    } yield r
-    val result = Await.result(process, 2 seconds)
-    result match {
+      query <- subject.findAll
+    } yield query
+    process map {
       case jobs if jobs.nonEmpty =>
         jobs.size >= 10 must be(true)
       case _ =>

@@ -6,12 +6,12 @@ import akka.actor.ActorSystem
 import com.google.inject.Singleton
 import javax.inject.Inject
 import model.JobStatus.JobStatus
-import model.{EmailAddress, Job, JobSpecification, JobStatus, MixSolution}
+import model.{EmailAddress, Job, JobSpecification, MixSolution}
 import play.api.Logger
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import slick.dbio.Effect
-import slick.jdbc.JdbcProfile
+import slick.basic.DatabasePublisher
 import slick.jdbc.PostgresProfile.api._
+import slick.jdbc.{JdbcProfile, ResultSetConcurrency, ResultSetType}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -39,6 +39,18 @@ class JobRepository @Inject()(implicit system: ActorSystem,
   type JobStreamQuery = Query[Job, JobTable#TableElementType, Seq]
 
   def findAll: Future[Seq[Job]] = db.run(jobs.result)
+
+  private def streamQuery(query: TableQuery[JobTable]): DatabasePublisher[Job] = {
+    val disableAutoCommit = SimpleDBIO(_.connection.setAutoCommit(false))
+    val q = query.result
+      .transactionally
+      .withStatementParameters(
+        rsType = ResultSetType.ForwardOnly,
+        rsConcurrency = ResultSetConcurrency.ReadOnly,
+        fetchSize = 100)
+    logger.debug(s"streamQuery ${query.result.statements.head}")
+    db.stream(disableAutoCommit andThen q, bufferNext = true)
+  }
 
   def findById(id: Long): Future[Option[Job]] =
     db.run(findByIdQuery(id))

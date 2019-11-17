@@ -1,0 +1,2 @@
+curl -v -H "Authorization: Bearer \
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQG1haWwuY29tIiwicm9sZSI6IkFkbWluIiwiZXhwIjoxNjA3Nzc2NDE0fQ.TXdqwG45atV1ubr__ScJOk1SICpVxmSe6eFIGiWroKc" http://localhost:9000/api/v2/jobs/list

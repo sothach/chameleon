@@ -4,6 +4,7 @@ COPY opt /opt
 USER root
 RUN ["chmod", "-R", "u=rX,g=rX", "/opt/docker"]
 RUN ["chmod", "u+x,g+x", "/opt/docker/bin/chameleon"]
+RUN ["chmod", "u+x,g+x", "/opt/docker/bin/token-tool"]
 
 FROM openjdk:8
 LABEL MAINTAINER="SettingKey(This / This / This / maintainer)"

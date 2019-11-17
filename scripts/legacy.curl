@@ -1,0 +1,2 @@
+curl -v -H "Host: localhost:9000" -H "Accept: text/plain" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBoaWxsaXBzLnJveUBnbWFpbC5jb20iLCJyb2xlIjoiQ3VzdG9tZXIiLCJleHAiOjE2MDc3NzY0MTR9.5oDakhugqO4iJTYdj8eT_zgugJZOoUHmnwd4PY6tF1E" \
+http://localhost:9000/v1/?input=%7B%22colors%22%3A5%2C%22customers%22%3A3%2C%22demands%22%3A%5B%5B1%2C1%2C1%5D%2C%5B2%2C1%2C0%2C2%2C0%5D%2C%5B1%2C5%2C0%5D%5D%7D%20
