@@ -3,14 +3,15 @@
 ### Prerequisites
 An accessible PostgreSql server, e.g.,
 '% docker run --rm -p 5434:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgres'
-### Dev mode
-`% sbt ~run`
-
+If required, create the database:
 ```bash
 % docker exec -it postgres /bin/bash
 % psql -h localhost -U postgres
 postgres=# create database jobsdb;
 ```
+
+### Run/Test in Dev mode
+`% sbt ~run`
 
 ```bash
 % docker stop postgres
@@ -28,8 +29,9 @@ E.g., locally:
 ## Heroku Deploy
 
 ### Set-up
+```% sbt docker:publish```
 ```% heroku stack:set container```
-```% bgit push heroku master```
+```% git push heroku master```
 ```% heroku container:push web```
 
 ### Test

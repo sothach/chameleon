@@ -27,8 +27,7 @@ import play.api.{Application, Configuration}
 import security.JwtUtility
 import services.{ChronoService, JobService}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.language.postfixOps
 
 class ControllerSpec extends PlaySpec with ScalaFutures with GuiceOneAppPerSuite

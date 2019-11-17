@@ -24,7 +24,6 @@ class ApiController @Inject()(authority: Authorization,
   val logger = Logger(this.getClass)
   logger.info("ApiController started")
 
-
   def listJobs(userEmail: Option[EmailAddress]): Action[AnyContent] =
     authority.async { implicit request =>
       val emailKey = request.user.role match {
@@ -71,11 +70,14 @@ class ApiController @Inject()(authority: Authorization,
         case Failure(t: RequestError) =>
           logger.warn(s"RequestError: ${getMessage(t.key, t.params)}")
           BadRequest(getMessage(t.key, t.params))
-        case _ =>
+        case t =>
+          logger.warn(s"unexpected error: $t")
           InternalServerError
       }
       response.recover {
         case t: ProcessingError =>
+          logger.warn(s"recovering with ${request.acceptedTypes}")
+          logger.warn(s"recovering from ${t.getMessage}")
           InternalServerError(getMessage(t.key, t.params))
         case _ =>
           InternalServerError

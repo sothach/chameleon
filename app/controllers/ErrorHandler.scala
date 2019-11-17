@@ -7,23 +7,17 @@ import play.api.mvc._
 
 import scala.concurrent._
 
-@Singleton
-class ErrorHandler @Inject()(
-                        jsonHandler: JsonHttpErrorHandler,
-                        htmlHandler: DefaultHttpErrorHandler,
-                        textHandler: PlainTextHttpErrorHandler)
-  extends PreferredMediaTypeHttpErrorHandler(
-    "application/json" -> jsonHandler,
-    "text/html" -> htmlHandler,
-    "text/plain" -> textHandler) {
+object plainTextHttpErrorHandler extends HttpErrorHandler {
+  def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
+    Future.successful(Status(statusCode)(message))
+  def onServerError(request: RequestHeader, t: Throwable): Future[Result] =
+    Future.successful(InternalServerError(t.getMessage))
 }
 
 @Singleton
-class PlainTextHttpErrorHandler extends HttpErrorHandler {
-  def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
-    Future.successful(Status(statusCode)(message))
-  }
-  def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
-    Future.successful(InternalServerError(exception.getMessage))
-  }
-}
+class ErrorHandler @Inject()(jsonHandler: JsonHttpErrorHandler,
+                             htmlHandler: DefaultHttpErrorHandler)
+  extends PreferredMediaTypeHttpErrorHandler(
+    "application/json" -> jsonHandler,
+    "text/html" -> htmlHandler,
+    "text/plain" -> plainTextHttpErrorHandler)

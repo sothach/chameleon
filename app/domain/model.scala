@@ -55,9 +55,8 @@ package object model {
 
   case class EmailAddress(address: String)
   object EmailAddress {
-    final private val emailPattern =
-      """^\s*([a-z0-9.!#$%&’'*+/=?^_`{|}~-]+)@([a-z0-9-]+(?:\.[a-z0-9-]+)*)\s*$""".r
-    def apply(email: String): Option[EmailAddress] = email.toLowerCase.replaceAll(" ","") match {
+    private val emailPattern = "^([a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+)@([a-zA-Z0-9.-]+)$".r
+    def apply(email: String): Option[EmailAddress] = email.toLowerCase.replaceAll("\\s","") match {
       case emailPattern(name, domain) => Some(new EmailAddress(s"$name@$domain"))
       case _ => None
     }
@@ -80,8 +79,5 @@ package object model {
   }
   case class RequestError(key: String, params: Array[String] = Array.empty) extends RuntimeException {
     override val getMessage: String = s"RequestError($key: {${params.mkString(",")}}"
-  }
-  object RequestError {
-    def apply(key: String, params: String*): RequestError = RequestError(key, params.toArray)
   }
 }

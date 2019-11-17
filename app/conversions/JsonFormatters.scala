@@ -8,14 +8,12 @@ object JsonFormatters {
   implicit object emailFormat extends Format[EmailAddress] {
     def writes(o: EmailAddress): JsValue = Json.toJson(o.address)
     def reads(json: JsValue): JsResult[EmailAddress] =
-      json.validate[String].map(o => EmailAddress(o)) match {
-        case JsSuccess(Some(email),path) =>
-          JsSuccess(email,path)
-        case JsSuccess(_,_) =>
+      json.validate[String].map(EmailAddress(_)) match {
+        case JsSuccess(Some(email), path) =>
+          JsSuccess(email, path)
+        case JsSuccess(_, _) | JsError(_) =>
           JsError("unable to parse email address")
-        case error @ JsError(_)=>
-          error
-      }
+     }
   }
 
   implicit object jobStatusFormat extends Format[JobStatus.Value] {
@@ -25,15 +23,13 @@ object JsonFormatters {
   }
 
   implicit object batchFormat extends Format[Batch] {
-    def writes(o: Batch): JsValue = {
-      val array = o.paints.length +: o.paints.flatMap(c => Array(c.color, c.finish.id))
-      Json.toJson(array)
-    }
+    def writes(o: Batch): JsValue =
+      Json.toJson(o.paints.length +: o.paints.flatMap(c => Array(c.color, c.finish.id)))
     def reads(json: JsValue): JsResult[Batch] = {
       val batch = json.as[Array[Int]]
       require(batch.length >= 3)
       val items = batch.drop(1).sliding(2, 2).map { pair =>
-        assert(pair.length == 2, "color/finish spec requires two values")
+        assert(pair.length == 2)
         Paint(pair.head, Finish(pair.last))
       }.toArray
       JsSuccess(Batch(items))
@@ -55,9 +51,9 @@ object JsonFormatters {
       (mColors, mDemands) match {
         case (JsSuccess(colors, _), JsSuccess(demands, _)) =>
           val batches = demands.map { batch =>
-            require(batch.length == (batch.head * 2) + 1, s"batch specification valid (${batch.mkString(",")})")
+            require(batch.length == (batch.head * 2) + 1)
             val items = batch.drop(1).sliding(2, 2).map { pair =>
-              require(pair.length == 2, "color/finish spec requires two values")
+              require(pair.length == 2)
               Paint(pair.head, Finish(pair.last))
             }.toArray
             Batch(items)

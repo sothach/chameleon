@@ -9,7 +9,7 @@ import akka.util.Timeout
 import algorithm.simple.OptimizerUsingPermutations
 import javax.inject.{Inject, Singleton}
 import model.{Job, JobStatus}
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.inject.ApplicationLifecycle
 
 import scala.concurrent.duration.Duration
@@ -20,19 +20,26 @@ import scala.util.{Failure, Success, Try}
 class MixService @Inject()(optimizer: OptimizerUsingPermutations, jobService: JobService, validator: RequestValidator,
                            configuration: Configuration, lifecycle: ApplicationLifecycle)(implicit system: ActorSystem) {
   implicit val ec: ExecutionContextExecutor = system.dispatchers.lookup("service-context")
+  private val logger = Logger(getClass)
   private implicit val timeout: Timeout =
     Timeout(Duration(configuration.getMillis("mixer-service.process.timeout"), TimeUnit.MILLISECONDS))
   private val parallelism = configuration.getOptional[Int]("mixer-service.process.parallelism").getOrElse(1)
 
+
   val decider: Supervision.Decider = {
-    case _: IllegalArgumentException =>
+    case e: IllegalArgumentException =>
+      logger.warn(s"handling error (resume): ${e.getMessage}")
       Supervision.Resume
-    case _ =>
+    case t =>
+      logger.warn(s"handling error (stop): ${t.getMessage}")
       Supervision.Stop
   }
   private val materializerSettings = ActorMaterializerSettings(system).withSupervisionStrategy(decider)
   private implicit val materializer: ActorMaterializer = ActorMaterializer(materializerSettings)(system)
-  lifecycle.addStopHook { () => Future.successful(materializer.shutdown())}
+  lifecycle.addStopHook { () =>
+    logger.info("service shutting down")
+    Future.successful(materializer.shutdown())
+  }
 
   private val verifyRequest = Flow[Job] map { job =>
     validator.validate(job)
