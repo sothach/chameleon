@@ -13,7 +13,13 @@
     }
   },
   "addons": [
-
+    {
+      "plan": "heroku-postgresql",
+      "as": "DATABASE",
+      "options": {
+        "version": "9.5"
+      }
+    }
   ],
   "buildpacks": [
     {
