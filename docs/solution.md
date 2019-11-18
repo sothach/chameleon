@@ -79,7 +79,8 @@ to the count of times the optimizer succeeded and failed to find a solution:
     }
 ```
 In production, these metrics could be consumed bt, for example, Prometheus, and rendered in Grafana, to derive 
-rate information (e.g., tps) as well as setting alerts to notify of unusual conditions
+rate information (e.g., tps) as well as setting alerts to notify of unusual conditions.  The `/metrics` endpoint is also
+suitable for application health monitoring, e.g., by Nagios, or Vigio (in the Heroku ecosphere)
 
 ## Scalability
 The service is deployed as a [Heroku Dyno](https://www.heroku.com/dynos), providing the ability to scale and fail-over
